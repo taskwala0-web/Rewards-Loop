@@ -1,238 +1,431 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Task Rewards</title>
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#1F4E78" />
-<link rel="apple-touch-icon" href="icon-192.png" />
-<style>
-  :root {
-    --primary: #1F4E78;
-    --primary-light: #2E75B6;
-    --bg: #F4F6F8;
-    --card-bg: #FFFFFF;
-    --text: #1A1A1A;
-    --muted: #6B7280;
-    --success: #1E8E3E;
-    --border: #E2E6EA;
-    box-sizing: border-box;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  * { box-sizing: border-box; }
-  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
-  body {
-    margin: 0;
-    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-  }
-  header {
-    background: var(--primary);
-    color: #fff;
-    padding: 18px 16px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    padding-top: calc(18px + env(safe-area-inset-top, 0px));
-  }
-  header h1 { margin: 0; font-size: 1.15rem; }
-  header p { margin: 2px 0 0; font-size: 0.8rem; opacity: 0.85; }
-  main { max-width: 520px; margin: 0 auto; padding: 16px; padding-bottom: 48px; }
-  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-  .tab-btn {
-    flex: 1; padding: 10px; border: none; border-radius: 10px;
-    background: var(--card-bg); color: var(--primary); font-weight: 600;
-    border: 1px solid var(--border); cursor: pointer; font-size: 0.9rem;
-  }
-  .tab-btn.active { background: var(--primary); color: #fff; }
-  section { display: none; }
-  section.active { display: block; }
-  .card {
-    background: var(--card-bg); border: 1px solid var(--border);
-    border-radius: 12px; padding: 14px; margin-bottom: 12px;
-  }
-  .card h3 { margin: 0 0 4px; font-size: 1rem; }
-  .card .platform { font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
-  .payout { font-weight: 700; color: var(--success); font-size: 1.05rem; }
-  .steps { font-size: 0.85rem; color: var(--muted); margin: 8px 0; white-space: pre-line; }
-  .btn {
-    display: inline-block; background: var(--primary-light); color: #fff;
-    border: none; border-radius: 8px; padding: 10px 14px; font-size: 0.85rem;
-    font-weight: 600; cursor: pointer; text-decoration: none; margin-top: 6px;
-  }
-  .btn.secondary { background: var(--primary); width: 100%; text-align: center; }
-  form { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-  label { display: block; font-size: 0.8rem; font-weight: 600; margin: 12px 0 4px; }
-  input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; }
-  .status-msg { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 0.85rem; display: none; }
-  .status-msg.ok { background: #E6F4EA; color: var(--success); display: block; }
-  .status-msg.err { background: #FCE8E6; color: #C5221F; display: block; }
-  .muted-note { color: var(--muted); font-size: 0.75rem; text-align: center; margin-top: 18px; }
-  .loading { text-align: center; color: var(--muted); padding: 24px 0; font-size: 0.9rem; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MicroTask Rewards</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Modern Dark Theme CSS */
+        :root {
+            --bg: #121212; --surface: #1e1e1e; --primary: #00e676; 
+            --text: #ffffff; --text-sec: #aaaaaa; --border: #333333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; }
+        
+        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 50; }
+        .logo { font-weight: 800; font-size: 1.2rem; color: var(--primary); }
+        .wallet-chip { background: #2d3748; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; cursor: pointer; border: 1px solid var(--primary); }
+        
+        .container { padding: 20px; max-width: 600px; margin: auto; }
+        
+        /* Modals */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--surface); padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input, select { width: 100%; padding: 14px; margin-top: 12px; background: var(--bg); border: 1px solid var(--border); color: white; border-radius: 8px; font-size: 1rem; }
+        input:focus { outline: none; border-color: var(--primary); }
+        button { width: 100%; padding: 14px; margin-top: 15px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+        button:disabled { background: #555; color: #888; cursor: not-allowed; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: white; }
+        
+        /* Task Cards */
+        .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 15px; transition: transform 0.2s; }
+        .task-card:active { transform: scale(0.98); }
+        .badge { background: #2d3748; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color: var(--primary); margin-bottom: 10px; display: inline-block; font-weight: 600; }
+        .task-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
+        .task-payout { font-size: 1.2rem; font-weight: 800; color: var(--primary); float: right; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-half { flex: 1; padding: 10px; font-size: 0.9rem; }
+        
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 15px 0; z-index: 50; }
+        .nav-item { color: var(--text-sec); font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item.active { color: var(--primary); }
+        
+        /* Status Badges */
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+        .status-Pending { background: #332b00; color: #ffeb3b; }
+        .status-Approved { background: #003314; color: #00e676; }
+        .status-Paid { background: #003314; color: #00e676; }
+        .status-Rejected { background: #330000; color: #ff5252; }
+    </style>
 </head>
 <body>
 
-<header>
-  <h1>Task Rewards</h1>
-  <p>Complete a task, submit proof, get paid</p>
-</header>
+    <header>
+        <div class="logo">⚡ TaskReward</div>
+        <div class="wallet-chip" id="walletChip" onclick="openWithdrawModal()">Wallet: ₹0</div>
+    </header>
 
-<main>
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="tasks">Tasks</button>
-    <button class="tab-btn" data-tab="submit">Submit Proof</button>
-  </div>
+    <div class="container" id="mainContent">
+        <!-- Default View: Tasks -->
+        <h3 style="margin-bottom: 15px;">Available Offers</h3>
+        <div id="tasksContainer">Loading tasks...</div>
+    </div>
 
-  <section id="tasks" class="active">
-    <div id="taskList" class="loading">Loading tasks…</div>
-  </section>
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-item active" id="navTasks" onclick="loadTasks()">
+            <span>📋</span> Tasks
+        </div>
+        <div class="nav-item" id="navStatus" onclick="loadStatus()">
+            <span>🕒</span> Status
+        </div>
+    </div>
 
-  <section id="submit">
-    <form id="submitForm">
-      <label>Your Name</label>
-      <input type="text" id="userName" required />
+    <!-- Auth Modal (Login/Register) -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <h2 id="authTitle" style="margin-bottom: 5px;">Welcome!</h2>
+            <p style="color: var(--text-sec); font-size: 0.9rem; margin-bottom: 15px;">Login or create a new account.</p>
+            
+            <input type="number" id="authMobile" placeholder="10-digit Mobile Number" required>
+            <input type="text" id="authName" placeholder="Full Name (Leave blank if old user)">
+            <input type="password" id="authPin" placeholder="4-Digit PIN" maxlength="4" required>
+            
+            <button id="btnAuth" onclick="handleAuth()">Continue</button>
+        </div>
+    </div>
 
-      <label>Mobile Number</label>
-      <input type="tel" id="mobile" required pattern="[0-9]{10}" placeholder="10-digit number" />
+    <!-- Submit Proof Modal -->
+    <div class="modal" id="submitModal">
+        <div class="modal-content">
+            <h2>Submit Proof</h2>
+            <p id="submitTaskName" style="color: var(--primary); margin: 10px 0 15px 0; font-weight: 600;"></p>
+            
+            <label style="font-size: 0.85rem; color: var(--text-sec);">Upload Screenshot (Max 5MB)</label>
+            <input type="file" id="proofImage" accept="image/*">
+            
+            <label style="font-size: 0.85rem; color: var(--text-sec); margin-top: 15px; display: block;">Payout UPI ID</label>
+            <input type="text" id="upiId" placeholder="e.g. 9876543210@ybl">
+            
+            <button id="btnSubmitProof" onclick="submitProof()">Upload & Submit</button>
+            <button class="btn-outline" onclick="closeModal('submitModal')">Cancel</button>
+        </div>
+    </div>
 
-      <label>Select Task</label>
-      <select id="taskSelect" required>
-        <option value="">Loading tasks…</option>
-      </select>
-
-      <label>Screenshot Proof</label>
-      <input type="file" id="screenshot" accept="image/*" required />
-
-      <label>Your UPI ID</label>
-      <input type="text" id="upiId" required placeholder="yourname@upi" />
-
-      <button type="submit" class="btn secondary">Submit</button>
-      <div id="statusMsg" class="status-msg"></div>
-    </form>
-  </section>
-
-  <p class="muted-note">Payouts are sent manually after verification. Usually within 2-3 days of approval.</p>
-</main>
+    <!-- Withdraw Modal -->
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content">
+            <h2>Withdraw to UPI</h2>
+            <p style="color: var(--text-sec); font-size: 0.9rem; margin-bottom: 15px;">Minimum withdrawal is ₹50.</p>
+            
+            <input type="number" id="wdAmount" placeholder="Amount (Min ₹50)">
+            <input type="text" id="wdUpi" placeholder="Your UPI ID">
+            
+            <button id="btnWithdraw" onclick="requestWithdraw()">Withdraw ⚡</button>
+            <button class="btn-outline" onclick="closeModal('withdrawModal')">Close</button>
+        </div>
+    </div>
 
 <script>
-  // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
-  var API_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+    // -----------------------------------------
+    // SYSTEM CONFIGURATION
+    // -----------------------------------------
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYlo3d5R9QSN1ocHuyD-H75vwXfwD2j_CvisRC7QvMe_GBQ0g9jeZx-L5ppZD6rqVsXg/exec'; 
+    let currentTaskId = null;
 
-  var tasksCache = [];
-
-  document.querySelectorAll(".tab-btn").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
-      document.querySelectorAll("section").forEach(function (s) { s.classList.remove("active"); });
-      btn.classList.add("active");
-      document.getElementById(btn.dataset.tab).classList.add("active");
-    });
-  });
-
-  function loadTasks() {
-    fetch(API_URL + "?action=tasks")
-      .then(function (r) { return r.json(); })
-      .then(function (tasks) {
-        tasksCache = tasks;
-        renderTasks(tasks);
-        renderTaskOptions(tasks);
-      })
-      .catch(function () {
-        document.getElementById("taskList").textContent = "Could not load tasks. Check your internet connection.";
-      });
-  }
-
-  function renderTasks(tasks) {
-    var list = document.getElementById("taskList");
-    if (!tasks.length) { list.textContent = "No active tasks right now. Check back soon."; return; }
-    list.innerHTML = "";
-    tasks.forEach(function (t) {
-      var card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML =
-        "<h3>" + escapeHtml(t.offerName) + "</h3>" +
-        "<div class='platform'>" + escapeHtml(t.platform) + "</div>" +
-        "<div class='payout'>Earn ₹" + t.payoutToUser + "</div>" +
-        "<div class='steps'>" + escapeHtml(t.steps) + "</div>" +
-        "<a class='btn' href='" + t.referralLink + "' target='_blank' rel='noopener'>Open Link</a>";
-      list.appendChild(card);
-    });
-  }
-
-  function renderTaskOptions(tasks) {
-    var sel = document.getElementById("taskSelect");
-    sel.innerHTML = "<option value=''>Choose a task…</option>";
-    tasks.forEach(function (t) {
-      var opt = document.createElement("option");
-      opt.value = t.taskId;
-      opt.textContent = t.offerName + " (₹" + t.payoutToUser + ")";
-      sel.appendChild(opt);
-    });
-  }
-
-  function escapeHtml(str) {
-    var div = document.createElement("div");
-    div.textContent = str || "";
-    return div.innerHTML;
-  }
-
-  document.getElementById("submitForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var fileInput = document.getElementById("screenshot");
-    var file = fileInput.files[0];
-    if (!file) return;
-
-    var statusEl = document.getElementById("statusMsg");
-    statusEl.className = "status-msg";
-    statusEl.textContent = "Uploading…";
-    statusEl.style.display = "block";
-
-    var reader = new FileReader();
-    reader.onload = function () {
-      var base64 = reader.result.split(",")[1];
-      var payload = {
-        userName: document.getElementById("userName").value,
-        mobile: document.getElementById("mobile").value,
-        taskId: document.getElementById("taskSelect").value,
-        upiId: document.getElementById("upiId").value,
-        screenshotBase64: base64,
-        screenshotMimeType: file.type,
-        screenshotFileName: file.name
-      };
-
-      fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids CORS preflight on Apps Script
-        body: JSON.stringify(payload)
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-          if (res.ok) {
-            statusEl.className = "status-msg ok";
-            statusEl.textContent = "Submitted! Reference: " + res.submissionId + ". You'll be paid after verification.";
-            document.getElementById("submitForm").reset();
-          } else {
-            statusEl.className = "status-msg err";
-            statusEl.textContent = "Error: " + res.error;
-          }
-        })
-        .catch(function () {
-          statusEl.className = "status-msg err";
-          statusEl.textContent = "Network error. Try again.";
-        });
+    // -----------------------------------------
+    // INITIALIZATION & SESSION CHECK
+    // -----------------------------------------
+    window.onload = () => {
+        const mobile = localStorage.getItem('rem_mobile');
+        const balance = localStorage.getItem('rem_balance') || 0;
+        
+        if (!mobile) {
+            document.getElementById('authModal').style.display = 'flex';
+        } else {
+            updateWalletUI(balance);
+            loadTasks();
+        }
     };
-    reader.readAsDataURL(file);
-  });
 
-  loadTasks();
+    // Generic Helper to close modals
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
 
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(function () {});
-  }
+    // Generic Fetch Wrapper for text/plain POST (Bypasses CORS preflight)
+    async function apiCall(payload) {
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+            return await res.json();
+        } catch (e) {
+            console.error(e);
+            return { success: false, error: "Network error. Please check your internet." };
+        }
+    }
+
+    // -----------------------------------------
+    // AUTHENTICATION (LOGIN / REGISTER)
+    // -----------------------------------------
+    async function handleAuth() {
+        const mobile = document.getElementById('authMobile').value;
+        const name = document.getElementById('authName').value.trim();
+        const pin = document.getElementById('authPin').value;
+        
+        if (mobile.length !== 10) return alert("Please enter a valid 10-digit mobile number.");
+        if (pin.length !== 4) return alert("Please enter a 4-digit PIN.");
+        
+        const btn = document.getElementById('btnAuth');
+        btn.innerText = "Please wait...";
+        btn.disabled = true;
+
+        const action = name !== "" ? 'register' : 'login';
+        const res = await apiCall({ action, mobile, name, pin });
+        
+        if (res.success) {
+            localStorage.setItem('rem_mobile', mobile);
+            localStorage.setItem('rem_name', res.name || name);
+            localStorage.setItem('rem_balance', res.balance);
+            
+            closeModal('authModal');
+            updateWalletUI(res.balance);
+            loadTasks();
+        } else {
+            alert(res.error || "Authentication Failed. Try again.");
+        }
+        
+        btn.innerText = "Continue";
+        btn.disabled = false;
+    }
+
+    function updateWalletUI(bal) {
+        document.getElementById('walletChip').innerText = `Wallet: ₹${bal}`;
+        localStorage.setItem('rem_balance', bal);
+    }
+
+    // -----------------------------------------
+    // LOAD TASKS (HOME SCREEN)
+    // -----------------------------------------
+    async function loadTasks() {
+        document.getElementById('navTasks').classList.add('active');
+        document.getElementById('navStatus').classList.remove('active');
+        
+        const container = document.getElementById('mainContent');
+        container.innerHTML = `<h3 style="margin-bottom: 15px;">Available Offers</h3><div id="tasksContainer">Loading tasks...</div>`;
+        const taskDiv = document.getElementById('tasksContainer');
+        
+        try {
+            const res = await fetch(`${SCRIPT_URL}?action=getTasks`);
+            const data = await res.json();
+            
+            if (data.success) {
+                if(data.tasks.length === 0) {
+                    taskDiv.innerHTML = "<p style='color: var(--text-sec);'>No active tasks right now. Check back later!</p>";
+                    return;
+                }
+                
+                taskDiv.innerHTML = data.tasks.map(t => `
+                    <div class="task-card">
+                        <div class="badge">${t.platform}</div>
+                        <span class="task-payout">₹${t.payout}</span>
+                        <div class="task-title">${t.name}</div>
+                        <p style="font-size: 0.85rem; color: var(--text-sec); margin-bottom: 10px;">${t.steps}</p>
+                        <div class="btn-group">
+                            <button class="btn-half" style="background: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="openLink('${t.id}', '${t.link}')">Open Link</button>
+                            <button class="btn-half" onclick="openSubmitModal('${t.id}', '${t.name}')">Submit Proof</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                taskDiv.innerHTML = "<p style='color: red;'>Error loading tasks.</p>";
+            }
+        } catch (e) {
+            taskDiv.innerHTML = "<p style='color: red;'>Failed to connect to server.</p>";
+        }
+    }
+
+    // -----------------------------------------
+    // TRACKING & LINK OPENING (AD-BLOCK PROOF)
+    // -----------------------------------------
+    function openLink(taskId, link) {
+        const mobile = localStorage.getItem('rem_mobile') || 'Guest';
+        const device = /android/i.test(navigator.userAgent) ? 'Android' : /ipad|iphone|ipod/i.test(navigator.userAgent) ? 'iOS' : 'Desktop';
+        
+        const payload = JSON.stringify({ action: 'logClick', taskId, mobile, device });
+        // Fire tracking beacon in background
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon(SCRIPT_URL, payload);
+        }
+        
+        window.open(link, '_blank');
+    }
+
+    // -----------------------------------------
+    // IMAGE COMPRESSION ENGINE
+    // -----------------------------------------
+    async function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let { width, height } = img;
+                    const max = 1080;
+                    
+                    if (width > height && width > max) { height *= max / width; width = max; } 
+                    else if (height > max) { width *= max / height; height = max; }
+                    
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    // Output 70% quality JPEG Base64
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // -----------------------------------------
+    // SUBMIT TASK PROOF
+    // -----------------------------------------
+    function openSubmitModal(taskId, taskName) {
+        currentTaskId = taskId;
+        document.getElementById('submitTaskName').innerText = taskName;
+        document.getElementById('upiId').value = localStorage.getItem('rem_upi') || '';
+        document.getElementById('submitModal').style.display = 'flex';
+    }
+
+    async function submitProof() {
+        const fileInput = document.getElementById('proofImage');
+        const upi = document.getElementById('upiId').value.trim();
+        
+        if (!fileInput.files[0]) return alert("Please select a screenshot.");
+        if (!upi) return alert("Please enter your UPI ID.");
+        
+        localStorage.setItem('rem_upi', upi); // Save UPI for future use
+        
+        const btn = document.getElementById('btnSubmitProof');
+        btn.innerText = "Compressing & Uploading...";
+        btn.disabled = true;
+
+        try {
+            const base64Img = await compressImage(fileInput.files[0]);
+            
+            const res = await apiCall({
+                action: 'submitTask',
+                mobile: localStorage.getItem('rem_mobile'),
+                name: localStorage.getItem('rem_name'),
+                taskId: currentTaskId,
+                upi: upi,
+                image: base64Img
+            });
+
+            if (res.success) {
+                alert("Proof submitted successfully! It will be reviewed shortly.");
+                closeModal('submitModal');
+                loadStatus(); // Automatically redirect to Status tab to show the new submission
+            } else {
+                alert("Upload failed: " + res.error);
+            }
+        } catch (err) {
+            alert("Something went wrong during upload.");
+        } finally {
+            btn.innerText = "Upload & Submit";
+            btn.disabled = false;
+            fileInput.value = ''; // Clear file input
+        }
+    }
+
+    // -----------------------------------------
+    // WITHDRAWAL ENGINE
+    // -----------------------------------------
+    function openWithdrawModal() {
+        const bal = parseFloat(localStorage.getItem('rem_balance') || 0);
+        document.getElementById('wdAmount').value = bal;
+        document.getElementById('wdUpi').value = localStorage.getItem('rem_upi') || '';
+        
+        const btn = document.getElementById('btnWithdraw');
+        if (bal < 50) {
+            btn.disabled = true;
+            btn.innerText = "Min Withdraw ₹50";
+        } else {
+            btn.disabled = false;
+            btn.innerText = `Withdraw ₹${bal} ⚡`;
+        }
+        document.getElementById('withdrawModal').style.display = 'flex';
+    }
+
+    async function requestWithdraw() {
+        const amount = document.getElementById('wdAmount').value;
+        const upi = document.getElementById('wdUpi').value.trim();
+        
+        if (amount < 50) return alert("Minimum withdrawal is ₹50.");
+        if (!upi) return alert("Please enter UPI ID.");
+
+        const btn = document.getElementById('btnWithdraw');
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        const res = await apiCall({
+            action: 'withdraw',
+            mobile: localStorage.getItem('rem_mobile'),
+            amount: amount,
+            upi: upi
+        });
+
+        if (res.success) {
+            alert("Withdrawal Requested Successfully!");
+            updateWalletUI(res.newBalance);
+            closeModal('withdrawModal');
+        } else {
+            alert(res.error || "Transaction Failed.");
+        }
+        
+        btn.innerText = "Withdraw ⚡";
+        btn.disabled = false;
+    }
+
+    // -----------------------------------------
+    // STATUS HISTORY TRACKER
+    // -----------------------------------------
+    async function loadStatus() {
+        document.getElementById('navTasks').classList.remove('active');
+        document.getElementById('navStatus').classList.add('active');
+        
+        const container = document.getElementById('mainContent');
+        container.innerHTML = `<h3 style="margin-bottom: 15px;">Your Submissions</h3><div id="statusList">Loading your history...</div>`;
+        
+        const mobile = localStorage.getItem('rem_mobile');
+        
+        try {
+            const res = await fetch(`${SCRIPT_URL}?action=getStatus&mobile=${mobile}`);
+            const data = await res.json();
+            
+            if (data.success) {
+                const list = document.getElementById('statusList');
+                if (data.history.length === 0) {
+                    list.innerHTML = "<p style='color: var(--text-sec);'>You haven't submitted any tasks yet.</p>";
+                    return;
+                }
+                
+                list.innerHTML = data.history.map(h => {
+                    const d = new Date(h.date);
+                    const formattedDate = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+                    return `
+                    <div class="task-card">
+                        <div style="display:flex; justify-content: space-between; align-items: flex-start;">
+                            <b style="font-size: 1.05rem;">${h.taskName}</b>
+                            <span class="status-badge status-${h.status}">${h.status}</span>
+                        </div>
+                        <p style="font-size:0.8rem; margin-top:8px; color:var(--text-sec)">Submitted on: ${formattedDate}</p>
+                        ${h.note ? `<p style="font-size:0.85rem; margin-top:8px; color:#ff5252; background: rgba(255,82,82,0.1); padding: 8px; border-radius: 4px;"><b>Note:</b> ${h.note}</p>` : ''}
+                    </div>
+                `}).join('');
+            }
+        } catch (e) {
+            document.getElementById('statusList').innerHTML = "<p style='color: red;'>Failed to load status.</p>";
+        }
+    }
 </script>
 </body>
 </html>
