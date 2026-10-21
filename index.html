@@ -244,16 +244,29 @@
     // -----------------------------------------
     // TRACKING & LINK OPENING (AD-BLOCK PROOF)
     // -----------------------------------------
-    function openLink(taskId, link) {
+   function openLink(taskId, link) {
         const mobile = localStorage.getItem('rem_mobile') || 'Guest';
         const device = /android/i.test(navigator.userAgent) ? 'Android' : /ipad|iphone|ipod/i.test(navigator.userAgent) ? 'iOS' : 'Desktop';
         
         const payload = JSON.stringify({ action: 'logClick', taskId, mobile, device });
-        // Fire tracking beacon in background
+        
+        // Strategy 1: Attempt Beacon (Fire & Forget)
+        let beaconSuccess = false;
         if (navigator.sendBeacon) {
-            navigator.sendBeacon(SCRIPT_URL, payload);
+            beaconSuccess = navigator.sendBeacon(SCRIPT_URL, payload);
         }
         
+        // Strategy 2: Fallback to Keepalive Fetch
+        if (!beaconSuccess) {
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: payload,
+                keepalive: true
+            }).catch(e => console.warn("Google Sheet Logging Blocked."));
+        }
+        
+        // Strategy 3: Open External Tracked Link
         window.open(link, '_blank');
     }
 
