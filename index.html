@@ -45,10 +45,10 @@
         
         /* Status Badges */
         .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
-        .status-Pending { background: #332b00; color: #ffeb3b; }
-        .status-Approved { background: #003314; color: #00e676; }
-        .status-Paid { background: #003314; color: #00e676; }
-        .status-Rejected { background: #330000; color: #ff5252; }
+        .status-pending { background: #332b00; color: #ffeb3b; }
+        .status-approved { background: #003314; color: #00e676; }
+        .status-paid { background: #003314; color: #00e676; }
+        .status-rejected { background: #330000; color: #ff5252; }
     </style>
 </head>
 <body>
@@ -59,7 +59,6 @@
     </header>
 
     <div class="container" id="mainContent">
-        <!-- Default View: Tasks -->
         <h3 style="margin-bottom: 15px;">Available Offers</h3>
         <div id="tasksContainer">Loading tasks...</div>
     </div>
@@ -74,7 +73,7 @@
         </div>
     </div>
 
-    <!-- Auth Modal (Login/Register) -->
+    <!-- Auth Modal (Mobile + PIN Login/Register) -->
     <div class="modal" id="authModal">
         <div class="modal-content">
             <h2 id="authTitle" style="margin-bottom: 5px;">Welcome!</h2>
@@ -97,6 +96,9 @@
             <label style="font-size: 0.85rem; color: var(--text-sec);">Upload Screenshot (Max 5MB)</label>
             <input type="file" id="proofImage" accept="image/*">
             
+            <label style="font-size: 0.85rem; color: var(--text-sec); margin-top: 15px; display: block;">Optional Note / Username</label>
+            <input type="text" id="proofText" placeholder="e.g. Registered with username abc">
+
             <label style="font-size: 0.85rem; color: var(--text-sec); margin-top: 15px; display: block;">Payout UPI ID</label>
             <input type="text" id="upiId" placeholder="e.g. 9876543210@ybl">
             
@@ -119,243 +121,22 @@
         </div>
     </div>
 
-<script>
-    // -----------------------------------------
-    // SYSTEM CONFIGURATION
-    // -----------------------------------------
+<script type="module">
+    import { supabase } from './supabase.js';
+
+    // Google Apps Script endpoint for image upload only
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYlo3d5R9QSN1ocHuyD-H75vwXfwD2j_CvisRC7QvMe_GBQ0g9jeZx-L5ppZD6rqVsXg/exec'; 
     let currentTaskId = null;
+    let currentUserProfile = null;
 
-    // -----------------------------------------
-    // INITIALIZATION & SESSION CHECK
-    // -----------------------------------------
-    window.onload = () => {
-        const mobile = localStorage.getItem('rem_mobile');
-        const balance = localStorage.getItem('rem_balance') || 0;
-        
-        if (!mobile) {
-            document.getElementById('authModal').style.display = 'flex';
-        } else {
-            updateWalletUI(balance);
-            loadTasks();
-        }
+    window.closeModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'none';
     };
 
-    // Generic Helper to close modals
-    function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
-
-    // Generic Fetch Wrapper for text/plain POST (Bypasses CORS preflight)
-    async function apiCall(payload) {
-        try {
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
-            });
-            return await res.json();
-        } catch (e) {
-            console.error(e);
-            return { success: false, error: "Network error. Please check your internet." };
-        }
-    }
-
-    // -----------------------------------------
-    // AUTHENTICATION (LOGIN / REGISTER)
-    // -----------------------------------------
-    async function handleAuth() {
-        const mobile = document.getElementById('authMobile').value;
-        const name = document.getElementById('authName').value.trim();
-        const pin = document.getElementById('authPin').value;
-        
-        if (mobile.length !== 10) return alert("Please enter a valid 10-digit mobile number.");
-        if (pin.length !== 4) return alert("Please enter a 4-digit PIN.");
-        
-        const btn = document.getElementById('btnAuth');
-        btn.innerText = "Please wait...";
-        btn.disabled = true;
-
-        const action = name !== "" ? 'register' : 'login';
-        const res = await apiCall({ action, mobile, name, pin });
-        
-        if (res.success) {
-            localStorage.setItem('rem_mobile', mobile);
-            localStorage.setItem('rem_name', res.name || name);
-            localStorage.setItem('rem_balance', res.balance);
-            
-            closeModal('authModal');
-            updateWalletUI(res.balance);
-            loadTasks();
-        } else {
-            alert(res.error || "Authentication Failed. Try again.");
-        }
-        
-        btn.innerText = "Continue";
-        btn.disabled = false;
-    }
-
-    function updateWalletUI(bal) {
-        document.getElementById('walletChip').innerText = `Wallet: ₹${bal}`;
-        localStorage.setItem('rem_balance', bal);
-    }
-
-    // -----------------------------------------
-    // LOAD TASKS (HOME SCREEN)
-    // -----------------------------------------
-    async function loadTasks() {
-        document.getElementById('navTasks').classList.add('active');
-        document.getElementById('navStatus').classList.remove('active');
-        
-        const container = document.getElementById('mainContent');
-        container.innerHTML = `<h3 style="margin-bottom: 15px;">Available Offers</h3><div id="tasksContainer">Loading tasks...</div>`;
-        const taskDiv = document.getElementById('tasksContainer');
-        
-        try {
-            const res = await fetch(`${SCRIPT_URL}?action=getTasks`);
-            const data = await res.json();
-            
-            if (data.success) {
-                if(data.tasks.length === 0) {
-                    taskDiv.innerHTML = "<p style='color: var(--text-sec);'>No active tasks right now. Check back later!</p>";
-                    return;
-                }
-                
-                taskDiv.innerHTML = data.tasks.map(t => `
-                    <div class="task-card">
-                        <div class="badge">${t.platform}</div>
-                        <span class="task-payout">₹${t.payout}</span>
-                        <div class="task-title">${t.name}</div>
-                        <p style="font-size: 0.85rem; color: var(--text-sec); margin-bottom: 10px;">${t.steps}</p>
-                        <div class="btn-group">
-                            <button class="btn-half" style="background: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="openLink('${t.id}', '${t.link}')">Open Link</button>
-                            <button class="btn-half" onclick="openSubmitModal('${t.id}', '${t.name}')">Submit Proof</button>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                taskDiv.innerHTML = "<p style='color: red;'>Error loading tasks.</p>";
-            }
-        } catch (e) {
-            taskDiv.innerHTML = "<p style='color: red;'>Failed to connect to server.</p>";
-        }
-    }
-
-    // -----------------------------------------
-    // TRACKING & LINK OPENING (AD-BLOCK PROOF)
-    // -----------------------------------------
-   function openLink(taskId, link) {
-        const mobile = localStorage.getItem('rem_mobile') || 'Guest';
-        const device = /android/i.test(navigator.userAgent) ? 'Android' : /ipad|iphone|ipod/i.test(navigator.userAgent) ? 'iOS' : 'Desktop';
-        
-        const payload = JSON.stringify({ action: 'logClick', taskId, mobile, device });
-        
-        // Strategy 1: Attempt Beacon (Fire & Forget)
-        let beaconSuccess = false;
-        if (navigator.sendBeacon) {
-            beaconSuccess = navigator.sendBeacon(SCRIPT_URL, payload);
-        }
-        
-        // Strategy 2: Fallback to Keepalive Fetch
-        if (!beaconSuccess) {
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: payload,
-                keepalive: true
-            }).catch(e => console.warn("Google Sheet Logging Blocked."));
-        }
-        
-        // Strategy 3: Open External Tracked Link
-        window.open(link, '_blank');
-    }
-
-    // -----------------------------------------
-    // IMAGE COMPRESSION ENGINE
-    // -----------------------------------------
-    async function compressImage(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let { width, height } = img;
-                    const max = 1080;
-                    
-                    if (width > height && width > max) { height *= max / width; width = max; } 
-                    else if (height > max) { width *= max / height; height = max; }
-                    
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    // Output 70% quality JPEG Base64
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // -----------------------------------------
-    // SUBMIT TASK PROOF
-    // -----------------------------------------
-    function openSubmitModal(taskId, taskName) {
-        currentTaskId = taskId;
-        document.getElementById('submitTaskName').innerText = taskName;
-        document.getElementById('upiId').value = localStorage.getItem('rem_upi') || '';
-        document.getElementById('submitModal').style.display = 'flex';
-    }
-
-    async function submitProof() {
-        const fileInput = document.getElementById('proofImage');
-        const upi = document.getElementById('upiId').value.trim();
-        
-        if (!fileInput.files[0]) return alert("Please select a screenshot.");
-        if (!upi) return alert("Please enter your UPI ID.");
-        
-        localStorage.setItem('rem_upi', upi); // Save UPI for future use
-        
-        const btn = document.getElementById('btnSubmitProof');
-        btn.innerText = "Compressing & Uploading...";
-        btn.disabled = true;
-
-        try {
-            const base64Img = await compressImage(fileInput.files[0]);
-            
-            const res = await apiCall({
-                action: 'submitTask',
-                mobile: localStorage.getItem('rem_mobile'),
-                name: localStorage.getItem('rem_name'),
-                taskId: currentTaskId,
-                upi: upi,
-                image: base64Img
-            });
-
-            if (res.success) {
-                alert("Proof submitted successfully! It will be reviewed shortly.");
-                closeModal('submitModal');
-                loadStatus(); // Automatically redirect to Status tab to show the new submission
-            } else {
-                alert("Upload failed: " + res.error);
-            }
-        } catch (err) {
-            alert("Something went wrong during upload.");
-        } finally {
-            btn.innerText = "Upload & Submit";
-            btn.disabled = false;
-            fileInput.value = ''; // Clear file input
-        }
-    }
-
-    // -----------------------------------------
-    // WITHDRAWAL ENGINE
-    // -----------------------------------------
-    function openWithdrawModal() {
-        const bal = parseFloat(localStorage.getItem('rem_balance') || 0);
+    window.openWithdrawModal = function() {
+        const bal = parseFloat(currentUserProfile?.wallet_balance || 0);
         document.getElementById('wdAmount').value = bal;
-        document.getElementById('wdUpi').value = localStorage.getItem('rem_upi') || '';
+        document.getElementById('wdUpi').value = currentUserProfile?.upi_id || localStorage.getItem('rem_upi') || '';
         
         const btn = document.getElementById('btnWithdraw');
         if (bal < 50) {
@@ -366,79 +147,323 @@
             btn.innerText = `Withdraw ₹${bal} ⚡`;
         }
         document.getElementById('withdrawModal').style.display = 'flex';
+    };
+
+    window.openSubmitModal = function(taskId, taskName) {
+        currentTaskId = taskId;
+        document.getElementById('submitTaskName').innerText = taskName;
+        document.getElementById('upiId').value = currentUserProfile?.upi_id || localStorage.getItem('rem_upi') || '';
+        document.getElementById('submitModal').style.display = 'flex';
+    };
+
+    window.openLink = function(link) {
+        window.open(link, '_blank');
+    };
+
+    function updateWalletUI(bal) {
+        document.getElementById('walletChip').innerText = `Wallet: ₹${bal}`;
     }
 
-    async function requestWithdraw() {
-        const amount = document.getElementById('wdAmount').value;
+    // AUTHENTICATION (Mobile + PIN with Supabase)
+    window.handleAuth = async function() {
+        const mobile = document.getElementById('authMobile').value.trim();
+        const name = document.getElementById('authName').value.trim();
+        const pin = document.getElementById('authPin').value.trim();
+        
+        if (mobile.length !== 10) return alert("Please enter a valid 10-digit mobile number.");
+        if (pin.length !== 4) return alert("Please enter a 4-digit PIN.");
+        
+        const btn = document.getElementById('btnAuth');
+        btn.innerText = "Please wait...";
+        btn.disabled = true;
+
+        try {
+            // Check if profile exists
+            let { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('mobile', mobile)
+                .maybeSingle();
+
+            if (!profile) {
+                // Register new user
+                const newId = crypto.randomUUID();
+                const { data: inserted, error: insertErr } = await supabase
+                    .from('profiles')
+                    .insert([{
+                        id: newId,
+                        mobile: mobile,
+                        full_name: name || 'User ' + mobile.slice(-4),
+                        pin: pin,
+                        wallet_balance: 0.00
+                    }])
+                    .select()
+                    .single();
+
+                if (insertErr) throw insertErr;
+                profile = inserted;
+            } else {
+                // Login check
+                if (profile.pin !== pin) {
+                    alert("Incorrect PIN. Please try again.");
+                    btn.innerText = "Continue";
+                    btn.disabled = false;
+                    return;
+                }
+            }
+
+            currentUserProfile = profile;
+            localStorage.setItem('rem_user_id', profile.id);
+            localStorage.setItem('rem_mobile', profile.mobile);
+            
+            closeModal('authModal');
+            updateWalletUI(profile.wallet_balance || 0);
+            loadTasks();
+        } catch (err) {
+            console.error(err);
+            alert("Auth error: " + (err.message || "Failed to authenticate"));
+        } finally {
+            btn.innerText = "Continue";
+            btn.disabled = false;
+        }
+    };
+
+    // LOAD ACTIVE TASKS FROM SUPABASE
+    window.loadTasks = async function() {
+        document.getElementById('navTasks').classList.add('active');
+        document.getElementById('navStatus').classList.remove('active');
+        
+        const container = document.getElementById('mainContent');
+        container.innerHTML = `<h3 style="margin-bottom: 15px;">Available Offers</h3><div id="tasksContainer">Loading tasks...</div>`;
+        const taskDiv = document.getElementById('tasksContainer');
+
+        try {
+            const { data: tasks, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            if (!tasks || tasks.length === 0) {
+                taskDiv.innerHTML = "<p style='color: var(--text-sec);'>No active tasks right now. Check back later!</p>";
+                return;
+            }
+
+            taskDiv.innerHTML = tasks.map(t => `
+                <div class="task-card">
+                    <div class="badge">${t.category}</div>
+                    <span class="task-payout">₹${t.reward_amount}</span>
+                    <div class="task-title">${t.title}</div>
+                    <p style="font-size: 0.85rem; color: var(--text-sec); margin-bottom: 10px;">${t.description}</p>
+                    <div class="btn-group">
+                        <button class="btn-half" style="background: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="openLink('${t.action_url}')">Open Link</button>
+                        <button class="btn-half" onclick="openSubmitModal('${t.id}', '${t.title}')">Submit Proof</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error(e);
+            taskDiv.innerHTML = "<p style='color: red;'>Failed to load tasks from database.</p>";
+        }
+    };
+
+    // IMAGE COMPRESSION
+    async function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let { width, height } = img;
+                    const max = 1080;
+                    if (width > height && width > max) { height *= max / width; width = max; } 
+                    else if (height > max) { width *= max / height; height = max; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // SUBMIT PROOF (Upload to Drive Script -> Save to Supabase)
+    window.submitProof = async function() {
+        const fileInput = document.getElementById('proofImage');
+        const proofText = document.getElementById('proofText').value.trim();
+        const upi = document.getElementById('upiId').value.trim();
+        
+        if (!fileInput.files[0]) return alert("Please select a screenshot.");
+        if (!upi) return alert("Please enter your UPI ID.");
+
+        const btn = document.getElementById('btnSubmitProof');
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        try {
+            const base64Img = await compressImage(fileInput.files[0]);
+            
+            // 1. Upload screenshot to Drive via Google Apps Script
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    action: 'uploadOnly',
+                    image: base64Img,
+                    mobile: currentUserProfile.mobile
+                })
+            });
+            const driveData = await res.json();
+            const screenshotUrl = driveData.url || 'Uploaded via Script';
+
+            // 2. Save submission directly into Supabase
+            const { error: subErr } = await supabase
+                .from('submissions')
+                .insert([{
+                    user_id: currentUserProfile.id,
+                    task_id: currentTaskId,
+                    proof_text: proofText,
+                    screenshot_url: screenshotUrl,
+                    status: 'pending'
+                }]);
+
+            if (subErr) throw subErr;
+
+            // Save UPI ID to profile
+            await supabase.from('profiles').update({ upi_id: upi }).eq('id', currentUserProfile.id);
+            currentUserProfile.upi_id = upi;
+            localStorage.setItem('rem_upi', upi);
+
+            alert("Proof submitted successfully! Admin will review shortly.");
+            closeModal('submitModal');
+            loadStatus();
+        } catch (err) {
+            console.error(err);
+            alert("Submission error: " + (err.message || "Failed to submit"));
+        } finally {
+            btn.innerText = "Upload & Submit";
+            btn.disabled = false;
+            fileInput.value = '';
+        }
+    };
+
+    // STATUS HISTORY TRACKER (From Supabase)
+    window.loadStatus = async function() {
+        document.getElementById('navTasks').classList.remove('active');
+        document.getElementById('navStatus').classList.add('active');
+        
+        const container = document.getElementById('mainContent');
+        container.innerHTML = `<h3 style="margin-bottom: 15px;">Your Submissions</h3><div id="statusList">Loading history...</div>`;
+        
+        try {
+            const { data: subs, error } = await supabase
+                .from('submissions')
+                .select(`
+                    id,
+                    status,
+                    admin_comment,
+                    created_at,
+                    tasks (title, reward_amount)
+                `)
+                .eq('user_id', currentUserProfile.id)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            const list = document.getElementById('statusList');
+            if (!subs || subs.length === 0) {
+                list.innerHTML = "<p style='color: var(--text-sec);'>You haven't submitted any tasks yet.</p>";
+                return;
+            }
+
+            list.innerHTML = subs.map(h => {
+                const d = new Date(h.created_at);
+                const formattedDate = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+                return `
+                <div class="task-card">
+                    <div style="display:flex; justify-content: space-between; align-items: flex-start;">
+                        <b style="font-size: 1.05rem;">${h.tasks?.title || 'Task'}</b>
+                        <span class="status-badge status-${h.status.toLowerCase()}">${h.status}</span>
+                    </div>
+                    <p style="font-size:0.8rem; margin-top:8px; color:var(--text-sec)">Submitted on: ${formattedDate}</p>
+                    ${h.admin_comment ? `<p style="font-size:0.85rem; margin-top:8px; color:#ff5252; background: rgba(255,82,82,0.1); padding: 8px; border-radius: 4px;"><b>Note:</b> ${h.admin_comment}</p>` : ''}
+                </div>
+            `}).join('');
+        } catch (e) {
+            console.error(e);
+            document.getElementById('statusList').innerHTML = "<p style='color: red;'>Failed to load status.</p>";
+        }
+    };
+
+    // WITHDRAWAL ENGINE (Saved to Supabase)
+    window.requestWithdraw = async function() {
+        const amount = parseFloat(document.getElementById('wdAmount').value);
         const upi = document.getElementById('wdUpi').value.trim();
         
         if (amount < 50) return alert("Minimum withdrawal is ₹50.");
         if (!upi) return alert("Please enter UPI ID.");
+        if (amount > (currentUserProfile.wallet_balance || 0)) return alert("Insufficient balance.");
 
         const btn = document.getElementById('btnWithdraw');
         btn.innerText = "Processing...";
         btn.disabled = true;
 
-        const res = await apiCall({
-            action: 'withdraw',
-            mobile: localStorage.getItem('rem_mobile'),
-            amount: amount,
-            upi: upi
-        });
-
-        if (res.success) {
-            alert("Withdrawal Requested Successfully!");
-            updateWalletUI(res.newBalance);
-            closeModal('withdrawModal');
-        } else {
-            alert(res.error || "Transaction Failed.");
-        }
-        
-        btn.innerText = "Withdraw ⚡";
-        btn.disabled = false;
-    }
-
-    // -----------------------------------------
-    // STATUS HISTORY TRACKER
-    // -----------------------------------------
-    async function loadStatus() {
-        document.getElementById('navTasks').classList.remove('active');
-        document.getElementById('navStatus').classList.add('active');
-        
-        const container = document.getElementById('mainContent');
-        container.innerHTML = `<h3 style="margin-bottom: 15px;">Your Submissions</h3><div id="statusList">Loading your history...</div>`;
-        
-        const mobile = localStorage.getItem('rem_mobile');
-        
         try {
-            const res = await fetch(`${SCRIPT_URL}?action=getStatus&mobile=${mobile}`);
-            const data = await res.json();
+            // Deduct balance locally & add record
+            const newBal = (currentUserProfile.wallet_balance || 0) - amount;
             
-            if (data.success) {
-                const list = document.getElementById('statusList');
-                if (data.history.length === 0) {
-                    list.innerHTML = "<p style='color: var(--text-sec);'>You haven't submitted any tasks yet.</p>";
-                    return;
-                }
-                
-                list.innerHTML = data.history.map(h => {
-                    const d = new Date(h.date);
-                    const formattedDate = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-                    return `
-                    <div class="task-card">
-                        <div style="display:flex; justify-content: space-between; align-items: flex-start;">
-                            <b style="font-size: 1.05rem;">${h.taskName}</b>
-                            <span class="status-badge status-${h.status}">${h.status}</span>
-                        </div>
-                        <p style="font-size:0.8rem; margin-top:8px; color:var(--text-sec)">Submitted on: ${formattedDate}</p>
-                        ${h.note ? `<p style="font-size:0.85rem; margin-top:8px; color:#ff5252; background: rgba(255,82,82,0.1); padding: 8px; border-radius: 4px;"><b>Note:</b> ${h.note}</p>` : ''}
-                    </div>
-                `}).join('');
-            }
-        } catch (e) {
-            document.getElementById('statusList').innerHTML = "<p style='color: red;'>Failed to load status.</p>";
+            await supabase.from('withdrawals').insert([{
+                user_id: currentUserProfile.id,
+                amount: amount,
+                upi_id: upi,
+                status: 'pending'
+            }]);
+
+            await supabase.from('profiles').update({ 
+                wallet_balance: newBal, 
+                upi_id: upi 
+            }).eq('id', currentUserProfile.id);
+
+            currentUserProfile.wallet_balance = newBal;
+            updateWalletUI(newBal);
+
+            alert("Withdrawal Requested Successfully!");
+            closeModal('withdrawModal');
+        } catch (err) {
+            console.error(err);
+            alert("Withdrawal failed: " + err.message);
+        } finally {
+            btn.innerText = "Withdraw ⚡";
+            btn.disabled = false;
         }
-    }
+    };
+
+    // INITIAL LOAD CHECK
+    window.onload = async () => {
+        const savedId = localStorage.getItem('rem_user_id');
+        if (!savedId) {
+            document.getElementById('authModal').style.display = 'flex';
+        } else {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', savedId)
+                .maybeSingle();
+
+            if (profile) {
+                currentUserProfile = profile;
+                updateWalletUI(profile.wallet_balance || 0);
+                loadTasks();
+            } else {
+                document.getElementById('authModal').style.display = 'flex';
+            }
+        }
+    };
 </script>
 </body>
 </html>
