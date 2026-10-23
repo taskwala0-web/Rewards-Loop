@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MicroTask - Admin Panel</title>
+  <title>MicroTask - Admin Control Center</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -12,29 +12,84 @@
 </head>
 <body class="text-zinc-900 min-h-screen p-4 sm:p-8">
   
-  <div class="max-w-5xl mx-auto">
+  <div class="max-w-5xl mx-auto space-y-8">
     <!-- Header -->
-    <header class="flex justify-between items-center mb-8 bg-white p-5 rounded-2xl shadow-sm border border-zinc-200">
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-zinc-200">
       <div>
-        <h1 class="text-2xl font-extrabold text-[#7357D8]">⚡ Admin Dashboard</h1>
-        <p class="text-xs text-zinc-500 font-semibold mt-1">Review proofs & approve payouts</p>
+        <h1 class="text-2xl font-extrabold text-[#7357D8]">⚡ Admin Control Center</h1>
+        <p class="text-xs text-zinc-500 font-semibold mt-1">Manage Tasks, Review Proofs & Process Withdrawals</p>
       </div>
-      <span id="admin-status" class="text-xs font-bold bg-[#FFD84D] text-zinc-900 px-3 py-1.5 rounded-full shadow-sm">
-        Verifying Admin...
-      </span>
-    </header>
-
-    <!-- Submissions Card -->
-    <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-lg font-bold text-zinc-900">📋 Pending Submissions</h2>
-        <button onclick="loadPendingSubmissions()" class="text-xs font-bold text-[#7357D8] hover:underline">
+      <div class="flex items-center gap-3">
+        <span id="admin-status" class="text-xs font-bold bg-[#FFD84D] text-zinc-900 px-3.5 py-1.5 rounded-full shadow-sm">
+          Verifying Admin...
+        </span>
+        <button onclick="refreshAll()" class="text-xs font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-3 py-1.5 rounded-xl transition">
           🔄 Refresh
         </button>
       </div>
+    </header>
 
+    <!-- Section 1: Create New Task -->
+    <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
+        <span>➕</span> Create New Task
+      </h2>
+      <form id="createTaskForm" onsubmit="handleCreateTask(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-zinc-600 mb-1">Task Title</label>
+          <input type="text" id="taskTitle" placeholder="e.g. Subscribe to channel" required class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#7357D8]">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-zinc-600 mb-1">Category</label>
+          <select id="taskCategory" class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#7357D8]">
+            <option value="YouTube">YouTube</option>
+            <option value="Telegram">Telegram</option>
+            <option value="Instagram">Instagram</option>
+            <option value="App Install">App Install</option>
+            <option value="Website">Website</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-zinc-600 mb-1">Description / Instructions</label>
+          <input type="text" id="taskDesc" placeholder="e.g. Subscribe, take a screenshot of bell icon and upload" required class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#7357D8]">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-zinc-600 mb-1">Action URL (Destination link)</label>
+          <input type="url" id="taskUrl" placeholder="https://..." required class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#7357D8]">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-zinc-600 mb-1">Reward Amount (₹)</label>
+          <input type="number" id="taskReward" placeholder="e.g. 5" min="1" step="0.5" required class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#7357D8]">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-zinc-600 mb-1">Total Available Slots</label>
+          <input type="number" id="taskSlots" placeholder="e.g. 100" min="1" required class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#7357D8]">
+        </div>
+        <div class="sm:col-span-2 pt-2">
+          <button type="submit" id="btnCreateTask" class="w-full sm:w-auto bg-[#7357D8] hover:bg-[#5f42c4] text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-sm transition">
+            Publish Live Task 🚀
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Section 2: Pending Submissions Review -->
+    <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
+        <span>📋</span> Pending Submissions Review
+      </h2>
       <div id="submissions-list" class="overflow-x-auto">
         <p class="text-zinc-400 text-sm">Checking for submissions...</p>
+      </div>
+    </div>
+
+    <!-- Section 3: Pending Withdrawals -->
+    <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
+        <span>💸</span> Pending Payout Requests
+      </h2>
+      <div id="withdrawals-list" class="overflow-x-auto">
+        <p class="text-zinc-400 text-sm">Checking for withdrawal requests...</p>
       </div>
     </div>
   </div>
@@ -42,9 +97,10 @@
   <script type="module">
     import { supabase } from './supabase.js';
 
+    let currentAdmin = null;
+
     async function checkAdminAndLoad() {
       const userId = localStorage.getItem('rem_user_id');
-      
       if (!userId) {
         alert('Please login first on the user page!');
         window.location.href = 'index.html';
@@ -58,19 +114,62 @@
         .maybeSingle();
 
       if (error || !profile || !profile.is_admin) {
-        alert('Access Denied! You are not marked as Admin in Supabase.');
+        alert('Access Denied! You are not an admin.');
         window.location.href = 'index.html';
         return;
       }
 
-      document.getElementById('admin-status').innerText = `Admin: ${profile.mobile || 'Verified'}`;
-      loadPendingSubmissions();
+      currentAdmin = profile;
+      document.getElementById('admin-status').innerText = `Admin: ${profile.mobile}`;
+      refreshAll();
     }
 
+    window.refreshAll = function() {
+      loadPendingSubmissions();
+      loadPendingWithdrawals();
+    };
+
+    // 1. CREATE TASK
+    window.handleCreateTask = async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnCreateTask');
+      btn.disabled = true;
+      btn.innerText = "Publishing...";
+
+      const title = document.getElementById('taskTitle').value.trim();
+      const category = document.getElementById('taskCategory').value;
+      const description = document.getElementById('taskDesc').value.trim();
+      const action_url = document.getElementById('taskUrl').value.trim();
+      const reward_amount = parseFloat(document.getElementById('taskReward').value);
+      const total_slots = parseInt(document.getElementById('taskSlots').value);
+
+      try {
+        const { error } = await supabase.from('tasks').insert([{
+          title,
+          category,
+          description,
+          action_url,
+          reward_amount,
+          total_slots,
+          remaining_slots: total_slots,
+          is_active: true
+        }]);
+
+        if (error) throw error;
+
+        alert('Task Published Successfully! Visible on index.html 🎉');
+        document.getElementById('createTaskForm').reset();
+      } catch (err) {
+        alert('Error creating task: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Publish Live Task 🚀";
+      }
+    };
+
+    // 2. LOAD PENDING SUBMISSIONS
     window.loadPendingSubmissions = async function() {
       const container = document.getElementById('submissions-list');
-      container.innerHTML = `<p class="text-zinc-400 text-sm">Loading pending proofs...</p>`;
-
       const { data: subs, error } = await supabase
         .from('submissions')
         .select(`
@@ -85,12 +184,12 @@
         .order('created_at', { ascending: false });
 
       if (error || !subs || subs.length === 0) {
-        container.innerHTML = `<p class="text-zinc-400 text-sm py-4">No pending submissions found. All caught up! 🎉</p>`;
+        container.innerHTML = `<p class="text-zinc-400 text-sm py-3">No pending submissions found. 🎉</p>`;
         return;
       }
 
       let html = `
-        <table class="w-full text-left border-collapse">
+        <table class="w-full text-left border-collapse text-sm">
           <thead>
             <tr class="border-b border-zinc-200 text-zinc-500 text-xs font-bold">
               <th class="p-3">User</th>
@@ -100,7 +199,7 @@
               <th class="p-3 text-right">Action</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-zinc-100 text-sm">
+          <tbody class="divide-y divide-zinc-100">
       `;
 
       subs.forEach(sub => {
@@ -112,21 +211,24 @@
             </td>
             <td class="p-3">
               <div class="font-bold text-zinc-800">${sub.tasks?.title || 'Task'}</div>
-              <span class="inline-block bg-[#EDE9FE] text-[#7357D8] text-xs font-extrabold px-2 py-0.5 rounded mt-0.5">
+              <span class="inline-block bg-[#EDE9FE] text-[#7357D8] text-xs font-extrabold px-2 py-0.5 rounded">
                 +₹${sub.tasks?.reward_amount || 0}
               </span>
             </td>
             <td class="p-3 text-xs text-zinc-600 max-w-xs">
-              ${sub.proof_text || '<span class="text-zinc-400 italic">No note provided</span>'}
+              ${sub.proof_text || '<span class="text-zinc-400 italic">No note</span>'}
             </td>
             <td class="p-3">
               <a href="${sub.screenshot_url}" target="_blank" class="inline-flex items-center text-xs font-bold text-[#7357D8] bg-[#F3F0FF] hover:bg-[#EDE9FE] px-2.5 py-1.5 rounded-lg border border-[#DDD6FE]">
                 🔍 View Proof
               </a>
             </td>
-            <td class="p-3 text-right">
-              <button onclick="approveTask('${sub.id}')" class="bg-[#FFD84D] hover:bg-[#FACC15] text-zinc-900 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition">
-                Approve & Pay ⚡
+            <td class="p-3 text-right space-x-1.5 whitespace-nowrap">
+              <button onclick="approveTask('${sub.id}')" class="bg-[#FFD84D] hover:bg-[#FACC15] text-zinc-900 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm transition">
+                Approve ⚡
+              </button>
+              <button onclick="rejectTask('${sub.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold transition">
+                Reject ✕
               </button>
             </td>
           </tr>
@@ -138,14 +240,95 @@
     };
 
     window.approveTask = async function(subId) {
-      if (!confirm("Are you sure you want to approve this task and credit wallet?")) return;
-
+      if (!confirm("Approve this task and credit balance?")) return;
       const { error } = await supabase.rpc('approve_submission', { sub_id: subId });
-      if (error) {
-        alert('Error approving task: ' + error.message);
-      } else {
-        alert('Task Approved! Balance credited to user wallet. 🚀');
+      if (error) alert('Error: ' + error.message);
+      else {
+        alert('Task Approved! Balance added to user. 🚀');
         loadPendingSubmissions();
+      }
+    };
+
+    window.rejectTask = async function(subId) {
+      const reason = prompt("Enter rejection reason for user:", "Screenshot is invalid or unclear.");
+      if (reason === null) return;
+
+      const { error } = await supabase
+        .from('submissions')
+        .update({ status: 'rejected', admin_comment: reason })
+        .eq('id', subId);
+
+      if (error) alert('Error: ' + error.message);
+      else {
+        alert('Submission rejected.');
+        loadPendingSubmissions();
+      }
+    };
+
+    // 3. LOAD PENDING WITHDRAWALS
+    window.loadPendingWithdrawals = async function() {
+      const container = document.getElementById('withdrawals-list');
+      const { data: wds, error } = await supabase
+        .from('withdrawals')
+        .select(`
+          id,
+          amount,
+          upi_id,
+          created_at,
+          profiles (mobile)
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error || !wds || wds.length === 0) {
+        container.innerHTML = `<p class="text-zinc-400 text-sm py-3">No pending withdrawal requests. 💸</p>`;
+        return;
+      }
+
+      let html = `
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-zinc-200 text-zinc-500 text-xs font-bold">
+              <th class="p-3">User Mobile</th>
+              <th class="p-3">Amount</th>
+              <th class="p-3">UPI ID</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-100">
+      `;
+
+      wds.forEach(w => {
+        html += `
+          <tr class="hover:bg-zinc-50">
+            <td class="p-3 font-bold text-zinc-900">${w.profiles?.mobile || 'User'}</td>
+            <td class="p-3 font-extrabold text-[#7357D8] text-base">₹${w.amount}</td>
+            <td class="p-3 font-mono font-bold text-zinc-700 select-all">${w.upi_id}</td>
+            <td class="p-3 text-right">
+              <button onclick="markWithdrawalPaid('${w.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition">
+                ✓ Mark Paid
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    };
+
+    window.markWithdrawalPaid = async function(wdId) {
+      if (!confirm("Confirm that you have transferred UPI payout to this user?")) return;
+
+      const { error } = await supabase
+        .from('withdrawals')
+        .update({ status: 'paid' })
+        .eq('id', wdId);
+
+      if (error) alert('Error: ' + error.message);
+      else {
+        alert('Marked as Paid successfully!');
+        loadPendingWithdrawals();
       }
     };
 
