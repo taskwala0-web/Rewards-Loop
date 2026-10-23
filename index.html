@@ -87,7 +87,12 @@
         </div>
     </div>
 
-   // SUBMIT PROOF (Direct to Supabase Storage)
+<script type="module">
+    import { supabase } from './supabase.js';
+
+    // ... baaki sabhi functions (closeModal, openWithdrawModal, handleAuth, loadTasks, compressImage wagera) ...
+
+    // SUBMIT PROOF (Direct to Supabase Storage)
     window.submitProof = async function() {
         const fileInput = document.getElementById('proofImage');
         const proofText = document.getElementById('proofText').value.trim();
@@ -112,14 +117,14 @@
 
             if (uploadErr) throw uploadErr;
 
-            // 2. Get Public URL of the uploaded image
+            // 2. Get Public URL
             const { data: urlData } = supabase.storage
                 .from('proofs')
                 .getPublicUrl(fileName);
 
             const screenshotUrl = urlData.publicUrl;
 
-            // 3. Save submission details in database
+            // 3. Save submission details
             const { error: subErr } = await supabase
                 .from('submissions')
                 .insert([{
@@ -132,7 +137,6 @@
 
             if (subErr) throw subErr;
 
-            // Save UPI ID to profile
             await supabase.from('profiles').update({ upi_id: upi }).eq('id', currentUserProfile.id);
             currentUserProfile.upi_id = upi;
             localStorage.setItem('rem_upi', upi);
@@ -148,8 +152,13 @@
             btn.disabled = false;
             fileInput.value = '';
         }
-    }
+    };
 
+    // ... loadStatus, requestWithdraw, window.onload functions ...
+
+</script>
+</body>
+</html>
     <!-- Withdraw Modal -->
     <div class="modal" id="withdrawModal">
         <div class="modal-content">
