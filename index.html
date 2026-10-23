@@ -4,51 +4,181 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MicroTask Rewards</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Modern Dark Theme CSS */
         :root {
-            --bg: #121212; --surface: #1e1e1e; --primary: #00e676; 
-            --text: #ffffff; --text-sec: #aaaaaa; --border: #333333;
+            --bg: #F8F7F2;
+            --surface: #FFFFFF;
+            --primary: #7357D8;
+            --primary-hover: #5d3fc8;
+            --accent: #FFD84D;
+            --text-main: #18181B;
+            --text-sec: #71717A;
+            --border: #E4E4E7;
+            --card-shadow: 0 4px 20px -2px rgba(115, 87, 216, 0.08);
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; }
-        
-        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 50; }
-        .logo { font-weight: 800; font-size: 1.2rem; color: var(--primary); }
-        .wallet-chip { background: #2d3748; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; cursor: pointer; border: 1px solid var(--primary); }
-        
-        .container { padding: 20px; max-width: 600px; margin: auto; }
-        
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); padding-bottom: 85px; min-height: 100vh; }
+
+        /* Header */
+        header { 
+            padding: 16px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid var(--border); 
+            background: var(--surface); 
+            position: sticky; 
+            top: 0; 
+            z-index: 50; 
+        }
+        .logo { font-weight: 800; font-size: 1.25rem; color: var(--primary); letter-spacing: -0.5px; }
+        .wallet-chip { 
+            background: var(--accent); 
+            color: #18181B; 
+            padding: 7px 14px; 
+            border-radius: 9999px; 
+            font-weight: 700; 
+            font-size: 0.9rem; 
+            cursor: pointer; 
+            box-shadow: 0 2px 6px rgba(255, 216, 77, 0.4); 
+            transition: transform 0.15s ease;
+        }
+        .wallet-chip:active { transform: scale(0.95); }
+
+        .container { padding: 20px 16px; max-width: 580px; margin: auto; }
+        .section-title { font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 16px; }
+
         /* Modals */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
-        .modal-content { background: var(--surface); padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        input, select { width: 100%; padding: 14px; margin-top: 12px; background: var(--bg); border: 1px solid var(--border); color: white; border-radius: 8px; font-size: 1rem; }
-        input:focus { outline: none; border-color: var(--primary); }
-        button { width: 100%; padding: 14px; margin-top: 15px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.2s; }
-        button:disabled { background: #555; color: #888; cursor: not-allowed; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: white; }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(24, 24, 27, 0.6); 
+            z-index: 100; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px; 
+            backdrop-filter: blur(6px); 
+        }
+        .modal-content { 
+            background: var(--surface); 
+            padding: 24px; 
+            border-radius: 18px; 
+            width: 100%; 
+            max-width: 420px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+            border: 1px solid var(--border);
+        }
+        .modal-content h2 { font-weight: 800; font-size: 1.35rem; color: var(--text-main); }
+
+        input, select { 
+            width: 100%; 
+            padding: 13px 15px; 
+            margin-top: 10px; 
+            background: #FAFAFA; 
+            border: 1.5px solid var(--border); 
+            color: var(--text-main); 
+            border-radius: 12px; 
+            font-size: 0.95rem; 
+            font-weight: 600;
+            transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: var(--primary); background: #FFF; }
         
+        button { 
+            width: 100%; 
+            padding: 13px; 
+            margin-top: 14px; 
+            background: var(--primary); 
+            color: #FFFFFF; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            font-size: 0.95rem; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+        }
+        button:hover { background: var(--primary-hover); }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #D4D4D8; color: #A1A1AA; cursor: not-allowed; }
+        
+        .btn-outline { 
+            background: transparent; 
+            border: 1.5px solid var(--border); 
+            color: var(--text-sec); 
+            margin-top: 8px; 
+        }
+        .btn-outline:hover { background: #F4F4F5; color: var(--text-main); }
+
         /* Task Cards */
-        .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 15px; transition: transform 0.2s; }
-        .task-card:active { transform: scale(0.98); }
-        .badge { background: #2d3748; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color: var(--primary); margin-bottom: 10px; display: inline-block; font-weight: 600; }
-        .task-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
-        .task-payout { font-size: 1.2rem; font-weight: 800; color: var(--primary); float: right; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-half { flex: 1; padding: 10px; font-size: 0.9rem; }
+        .task-card { 
+            background: var(--surface); 
+            border: 1px solid var(--border); 
+            border-radius: 16px; 
+            padding: 18px; 
+            margin-bottom: 14px; 
+            box-shadow: var(--card-shadow); 
+            transition: transform 0.15s ease;
+        }
+        .badge { 
+            background: rgba(115, 87, 216, 0.12); 
+            padding: 4px 10px; 
+            border-radius: 9999px; 
+            font-size: 0.75rem; 
+            color: var(--primary); 
+            margin-bottom: 8px; 
+            display: inline-block; 
+            font-weight: 700; 
+        }
+        .task-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--text-main); }
+        .task-payout { 
+            font-size: 1.25rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            float: right; 
+            background: #EDE9FE; 
+            padding: 2px 10px; 
+            border-radius: 8px; 
+        }
+        .task-desc { font-size: 0.88rem; color: var(--text-sec); line-height: 1.4; margin-bottom: 14px; }
         
+        .btn-group { display: flex; gap: 10px; }
+        .btn-half { flex: 1; padding: 11px; font-size: 0.9rem; margin-top: 0; }
+        .btn-action { background: var(--accent); color: #18181B; }
+        .btn-action:hover { background: #f5cc38; }
+
         /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 15px 0; z-index: 50; }
-        .nav-item { color: var(--text-sec); font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            background: var(--surface); 
+            border-top: 1px solid var(--border); 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 12px 0 14px 0; 
+            z-index: 50; 
+        }
+        .nav-item { 
+            color: var(--text-sec); 
+            font-size: 0.85rem; 
+            font-weight: 700; 
+            cursor: pointer; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 4px; 
+            transition: color 0.15s;
+        }
         .nav-item.active { color: var(--primary); }
-        
+
         /* Status Badges */
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
-        .status-pending { background: #332b00; color: #ffeb3b; }
-        .status-approved { background: #003314; color: #00e676; }
-        .status-paid { background: #003314; color: #00e676; }
-        .status-rejected { background: #330000; color: #ff5252; }
+        .status-badge { padding: 4px 10px; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; text-transform: capitalize; }
+        .status-pending { background: #FEF3C7; color: #D97706; }
+        .status-approved, .status-paid { background: #DCFCE7; color: #15803D; }
+        .status-rejected { background: #FEE2E2; color: #B91C1C; }
     </style>
 </head>
 <body>
@@ -59,116 +189,64 @@
     </header>
 
     <div class="container" id="mainContent">
-        <h3 style="margin-bottom: 15px;">Available Offers</h3>
-        <div id="tasksContainer">Loading tasks...</div>
+        <h3 class="section-title">Available Offers</h3>
+        <div id="tasksContainer"><p style="color: var(--text-sec);">Loading tasks...</p></div>
     </div>
 
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <div class="nav-item active" id="navTasks" onclick="loadTasks()">
-            <span>📋</span> Tasks
+            <span style="font-size: 1.1rem;">📋</span> Tasks
         </div>
         <div class="nav-item" id="navStatus" onclick="loadStatus()">
-            <span>🕒</span> Status
+            <span style="font-size: 1.1rem;">🕒</span> Status
         </div>
     </div>
 
-    <!-- Auth Modal (Mobile + PIN Login/Register) -->
+    <!-- Auth Modal (Mobile + PIN) -->
     <div class="modal" id="authModal">
         <div class="modal-content">
-            <h2 id="authTitle" style="margin-bottom: 5px;">Welcome!</h2>
-            <p style="color: var(--text-sec); font-size: 0.9rem; margin-bottom: 15px;">Login or create a new account.</p>
+            <h2>Welcome! 👋</h2>
+            <p style="color: var(--text-sec); font-size: 0.9rem; margin-top: 4px; margin-bottom: 14px;">Login or create your account</p>
             
-            <input type="number" id="authMobile" placeholder="10-digit Mobile Number" required>
+            <input type="tel" id="authMobile" placeholder="10-digit Mobile Number" maxlength="10" required>
             <input type="text" id="authName" placeholder="Full Name (Leave blank if old user)">
             <input type="password" id="authPin" placeholder="4-Digit PIN" maxlength="4" required>
             
-            <button id="btnAuth" onclick="handleAuth()">Continue</button>
+            <button id="btnAuth" onclick="handleAuth()">Continue ⚡</button>
         </div>
     </div>
 
-<script type="module">
-    import { supabase } from './supabase.js';
+    <!-- Submit Proof Modal -->
+    <div class="modal" id="submitModal">
+        <div class="modal-content">
+            <h2>Submit Proof</h2>
+            <p id="submitTaskName" style="color: var(--primary); margin: 6px 0 14px 0; font-weight: 700; font-size: 0.95rem;"></p>
+            
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-sec);">Upload Screenshot (Max 5MB)</label>
+            <input type="file" id="proofImage" accept="image/*">
+            
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-sec); margin-top: 14px; display: block;">Optional Note / Username</label>
+            <input type="text" id="proofText" placeholder="e.g. Registered with username abc">
 
-    // ... baaki sabhi functions (closeModal, openWithdrawModal, handleAuth, loadTasks, compressImage wagera) ...
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-sec); margin-top: 14px; display: block;">Payout UPI ID</label>
+            <input type="text" id="upiId" placeholder="e.g. 9876543210@ybl">
+            
+            <button id="btnSubmitProof" class="btn-action" onclick="submitProof()">Upload & Submit Proof</button>
+            <button class="btn-outline" onclick="closeModal('submitModal')">Cancel</button>
+        </div>
+    </div>
 
-    // SUBMIT PROOF (Direct to Supabase Storage)
-    window.submitProof = async function() {
-        const fileInput = document.getElementById('proofImage');
-        const proofText = document.getElementById('proofText').value.trim();
-        const upi = document.getElementById('upiId').value.trim();
-        
-        if (!fileInput.files[0]) return alert("Please select a screenshot.");
-        if (!upi) return alert("Please enter your UPI ID.");
-
-        const btn = document.getElementById('btnSubmitProof');
-        btn.innerText = "Uploading Proof...";
-        btn.disabled = true;
-
-        try {
-            const file = fileInput.files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${currentUserProfile.mobile}_${Date.now()}.${fileExt}`;
-
-            // 1. Direct upload to Supabase Storage bucket 'proofs'
-            const { data: uploadData, error: uploadErr } = await supabase.storage
-                .from('proofs')
-                .upload(fileName, file, { cacheControl: '3600', upsert: false });
-
-            if (uploadErr) throw uploadErr;
-
-            // 2. Get Public URL
-            const { data: urlData } = supabase.storage
-                .from('proofs')
-                .getPublicUrl(fileName);
-
-            const screenshotUrl = urlData.publicUrl;
-
-            // 3. Save submission details
-            const { error: subErr } = await supabase
-                .from('submissions')
-                .insert([{
-                    user_id: currentUserProfile.id,
-                    task_id: currentTaskId,
-                    proof_text: proofText,
-                    screenshot_url: screenshotUrl,
-                    status: 'pending'
-                }]);
-
-            if (subErr) throw subErr;
-
-            await supabase.from('profiles').update({ upi_id: upi }).eq('id', currentUserProfile.id);
-            currentUserProfile.upi_id = upi;
-            localStorage.setItem('rem_upi', upi);
-
-            alert("Proof submitted successfully! Admin will review shortly.");
-            closeModal('submitModal');
-            loadStatus();
-        } catch (err) {
-            console.error(err);
-            alert("Submission error: " + (err.message || "Failed to submit"));
-        } finally {
-            btn.innerText = "Upload & Submit";
-            btn.disabled = false;
-            fileInput.value = '';
-        }
-    };
-
-    // ... loadStatus, requestWithdraw, window.onload functions ...
-
-</script>
-</body>
-</html>
     <!-- Withdraw Modal -->
     <div class="modal" id="withdrawModal">
         <div class="modal-content">
             <h2>Withdraw to UPI</h2>
-            <p style="color: var(--text-sec); font-size: 0.9rem; margin-bottom: 15px;">Minimum withdrawal is ₹50.</p>
+            <p style="color: var(--text-sec); font-size: 0.9rem; margin: 4px 0 14px 0;">Minimum withdrawal is ₹50.</p>
             
             <input type="number" id="wdAmount" placeholder="Amount (Min ₹50)">
             <input type="text" id="wdUpi" placeholder="Your UPI ID">
             
-            <button id="btnWithdraw" onclick="requestWithdraw()">Withdraw ⚡</button>
+            <button id="btnWithdraw" class="btn-action" onclick="requestWithdraw()">Withdraw ⚡</button>
             <button class="btn-outline" onclick="closeModal('withdrawModal')">Close</button>
         </div>
     </div>
@@ -176,8 +254,6 @@
 <script type="module">
     import { supabase } from './supabase.js';
 
-    // Google Apps Script endpoint for image upload only
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYlo3d5R9QSN1ocHuyD-H75vwXfwD2j_CvisRC7QvMe_GBQ0g9jeZx-L5ppZD6rqVsXg/exec'; 
     let currentTaskId = null;
     let currentUserProfile = null;
 
@@ -216,7 +292,7 @@
         document.getElementById('walletChip').innerText = `Wallet: ₹${bal}`;
     }
 
-    // AUTHENTICATION (Mobile + PIN with Supabase)
+    // AUTHENTICATION (Mobile + PIN)
     window.handleAuth = async function() {
         const mobile = document.getElementById('authMobile').value.trim();
         const name = document.getElementById('authName').value.trim();
@@ -226,11 +302,10 @@
         if (pin.length !== 4) return alert("Please enter a 4-digit PIN.");
         
         const btn = document.getElementById('btnAuth');
-        btn.innerText = "Please wait...";
+        btn.innerText = "Verifying...";
         btn.disabled = true;
 
         try {
-            // Check if profile exists
             let { data: profile, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -238,12 +313,9 @@
                 .maybeSingle();
 
             if (!profile) {
-                // Register new user
-                const newId = crypto.randomUUID();
                 const { data: inserted, error: insertErr } = await supabase
                     .from('profiles')
                     .insert([{
-                        id: newId,
                         mobile: mobile,
                         full_name: name || 'User ' + mobile.slice(-4),
                         pin: pin,
@@ -255,10 +327,9 @@
                 if (insertErr) throw insertErr;
                 profile = inserted;
             } else {
-                // Login check
                 if (profile.pin !== pin) {
-                    alert("Incorrect PIN. Please try again.");
-                    btn.innerText = "Continue";
+                    alert("Incorrect PIN! Please try again.");
+                    btn.innerText = "Continue ⚡";
                     btn.disabled = false;
                     return;
                 }
@@ -275,18 +346,18 @@
             console.error(err);
             alert("Auth error: " + (err.message || "Failed to authenticate"));
         } finally {
-            btn.innerText = "Continue";
+            btn.innerText = "Continue ⚡";
             btn.disabled = false;
         }
     };
 
-    // LOAD ACTIVE TASKS FROM SUPABASE
+    // LOAD ACTIVE TASKS
     window.loadTasks = async function() {
         document.getElementById('navTasks').classList.add('active');
         document.getElementById('navStatus').classList.remove('active');
         
         const container = document.getElementById('mainContent');
-        container.innerHTML = `<h3 style="margin-bottom: 15px;">Available Offers</h3><div id="tasksContainer">Loading tasks...</div>`;
+        container.innerHTML = `<h3 class="section-title">Available Offers</h3><div id="tasksContainer"><p style="color: var(--text-sec);">Loading tasks...</p></div>`;
         const taskDiv = document.getElementById('tasksContainer');
 
         try {
@@ -305,46 +376,23 @@
 
             taskDiv.innerHTML = tasks.map(t => `
                 <div class="task-card">
-                    <div class="badge">${t.category}</div>
                     <span class="task-payout">₹${t.reward_amount}</span>
+                    <div class="badge">${t.category}</div>
                     <div class="task-title">${t.title}</div>
-                    <p style="font-size: 0.85rem; color: var(--text-sec); margin-bottom: 10px;">${t.description}</p>
+                    <p class="task-desc">${t.description}</p>
                     <div class="btn-group">
-                        <button class="btn-half" style="background: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="openLink('${t.action_url}')">Open Link</button>
-                        <button class="btn-half" onclick="openSubmitModal('${t.id}', '${t.title}')">Submit Proof</button>
+                        <button class="btn-half btn-outline" onclick="openLink('${t.action_url}')">Open Link</button>
+                        <button class="btn-half btn-action" onclick="openSubmitModal('${t.id}', '${t.title}')">Submit Proof</button>
                     </div>
                 </div>
             `).join('');
         } catch (e) {
             console.error(e);
-            taskDiv.innerHTML = "<p style='color: red;'>Failed to load tasks from database.</p>";
+            taskDiv.innerHTML = "<p style='color: #EF4444;'>Failed to load tasks from database.</p>";
         }
     };
 
-    // IMAGE COMPRESSION
-    async function compressImage(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let { width, height } = img;
-                    const max = 1080;
-                    if (width > height && width > max) { height *= max / width; width = max; } 
-                    else if (height > max) { width *= max / height; height = max; }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // SUBMIT PROOF (Upload to Drive Script -> Save to Supabase)
+    // SUBMIT PROOF (Supabase Storage Direct Upload)
     window.submitProof = async function() {
         const fileInput = document.getElementById('proofImage');
         const proofText = document.getElementById('proofText').value.trim();
@@ -354,26 +402,29 @@
         if (!upi) return alert("Please enter your UPI ID.");
 
         const btn = document.getElementById('btnSubmitProof');
-        btn.innerText = "Processing...";
+        btn.innerText = "Uploading Proof...";
         btn.disabled = true;
 
         try {
-            const base64Img = await compressImage(fileInput.files[0]);
-            
-            // 1. Upload screenshot to Drive via Google Apps Script
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                    action: 'uploadOnly',
-                    image: base64Img,
-                    mobile: currentUserProfile.mobile
-                })
-            });
-            const driveData = await res.json();
-            const screenshotUrl = driveData.url || 'Uploaded via Script';
+            const file = fileInput.files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${currentUserProfile.mobile}_${Date.now()}.${fileExt}`;
 
-            // 2. Save submission directly into Supabase
+            // 1. Direct upload to Supabase Storage bucket 'proofs'
+            const { error: uploadErr } = await supabase.storage
+                .from('proofs')
+                .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+            if (uploadErr) throw uploadErr;
+
+            // 2. Get Public URL
+            const { data: urlData } = supabase.storage
+                .from('proofs')
+                .getPublicUrl(fileName);
+
+            const screenshotUrl = urlData.publicUrl;
+
+            // 3. Save submission into Supabase Database
             const { error: subErr } = await supabase
                 .from('submissions')
                 .insert([{
@@ -386,7 +437,6 @@
 
             if (subErr) throw subErr;
 
-            // Save UPI ID to profile
             await supabase.from('profiles').update({ upi_id: upi }).eq('id', currentUserProfile.id);
             currentUserProfile.upi_id = upi;
             localStorage.setItem('rem_upi', upi);
@@ -398,19 +448,19 @@
             console.error(err);
             alert("Submission error: " + (err.message || "Failed to submit"));
         } finally {
-            btn.innerText = "Upload & Submit";
+            btn.innerText = "Upload & Submit Proof";
             btn.disabled = false;
             fileInput.value = '';
         }
     };
 
-    // STATUS HISTORY TRACKER (From Supabase)
+    // LOAD SUBMISSION STATUS
     window.loadStatus = async function() {
         document.getElementById('navTasks').classList.remove('active');
         document.getElementById('navStatus').classList.add('active');
         
         const container = document.getElementById('mainContent');
-        container.innerHTML = `<h3 style="margin-bottom: 15px;">Your Submissions</h3><div id="statusList">Loading history...</div>`;
+        container.innerHTML = `<h3 class="section-title">Your Submissions</h3><div id="statusList"><p style="color: var(--text-sec);">Loading your history...</p></div>`;
         
         try {
             const { data: subs, error } = await supabase
@@ -439,20 +489,20 @@
                 return `
                 <div class="task-card">
                     <div style="display:flex; justify-content: space-between; align-items: flex-start;">
-                        <b style="font-size: 1.05rem;">${h.tasks?.title || 'Task'}</b>
+                        <b style="font-size: 1.05rem; color: var(--text-main);">${h.tasks?.title || 'Task'}</b>
                         <span class="status-badge status-${h.status.toLowerCase()}">${h.status}</span>
                     </div>
                     <p style="font-size:0.8rem; margin-top:8px; color:var(--text-sec)">Submitted on: ${formattedDate}</p>
-                    ${h.admin_comment ? `<p style="font-size:0.85rem; margin-top:8px; color:#ff5252; background: rgba(255,82,82,0.1); padding: 8px; border-radius: 4px;"><b>Note:</b> ${h.admin_comment}</p>` : ''}
+                    ${h.admin_comment ? `<p style="font-size:0.85rem; margin-top:8px; color:#DC2626; background: #FEE2E2; padding: 8px 12px; border-radius: 8px;"><b>Admin Note:</b> ${h.admin_comment}</p>` : ''}
                 </div>
             `}).join('');
         } catch (e) {
             console.error(e);
-            document.getElementById('statusList').innerHTML = "<p style='color: red;'>Failed to load status.</p>";
+            document.getElementById('statusList').innerHTML = "<p style='color: #EF4444;'>Failed to load status.</p>";
         }
     };
 
-    // WITHDRAWAL ENGINE (Saved to Supabase)
+    // REQUEST WITHDRAWAL
     window.requestWithdraw = async function() {
         const amount = parseFloat(document.getElementById('wdAmount').value);
         const upi = document.getElementById('wdUpi').value.trim();
@@ -466,7 +516,6 @@
         btn.disabled = true;
 
         try {
-            // Deduct balance locally & add record
             const newBal = (currentUserProfile.wallet_balance || 0) - amount;
             
             await supabase.from('withdrawals').insert([{
@@ -495,7 +544,7 @@
         }
     };
 
-    // INITIAL LOAD CHECK
+    // INITIAL LOAD
     window.onload = async () => {
         const savedId = localStorage.getItem('rem_user_id');
         if (!savedId) {
