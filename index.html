@@ -87,25 +87,68 @@
         </div>
     </div>
 
-    <!-- Submit Proof Modal -->
-    <div class="modal" id="submitModal">
-        <div class="modal-content">
-            <h2>Submit Proof</h2>
-            <p id="submitTaskName" style="color: var(--primary); margin: 10px 0 15px 0; font-weight: 600;"></p>
-            
-            <label style="font-size: 0.85rem; color: var(--text-sec);">Upload Screenshot (Max 5MB)</label>
-            <input type="file" id="proofImage" accept="image/*">
-            
-            <label style="font-size: 0.85rem; color: var(--text-sec); margin-top: 15px; display: block;">Optional Note / Username</label>
-            <input type="text" id="proofText" placeholder="e.g. Registered with username abc">
+   // SUBMIT PROOF (Direct to Supabase Storage)
+    window.submitProof = async function() {
+        const fileInput = document.getElementById('proofImage');
+        const proofText = document.getElementById('proofText').value.trim();
+        const upi = document.getElementById('upiId').value.trim();
+        
+        if (!fileInput.files[0]) return alert("Please select a screenshot.");
+        if (!upi) return alert("Please enter your UPI ID.");
 
-            <label style="font-size: 0.85rem; color: var(--text-sec); margin-top: 15px; display: block;">Payout UPI ID</label>
-            <input type="text" id="upiId" placeholder="e.g. 9876543210@ybl">
-            
-            <button id="btnSubmitProof" onclick="submitProof()">Upload & Submit</button>
-            <button class="btn-outline" onclick="closeModal('submitModal')">Cancel</button>
-        </div>
-    </div>
+        const btn = document.getElementById('btnSubmitProof');
+        btn.innerText = "Uploading Proof...";
+        btn.disabled = true;
+
+        try {
+            const file = fileInput.files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${currentUserProfile.mobile}_${Date.now()}.${fileExt}`;
+
+            // 1. Direct upload to Supabase Storage bucket 'proofs'
+            const { data: uploadData, error: uploadErr } = await supabase.storage
+                .from('proofs')
+                .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+            if (uploadErr) throw uploadErr;
+
+            // 2. Get Public URL of the uploaded image
+            const { data: urlData } = supabase.storage
+                .from('proofs')
+                .getPublicUrl(fileName);
+
+            const screenshotUrl = urlData.publicUrl;
+
+            // 3. Save submission details in database
+            const { error: subErr } = await supabase
+                .from('submissions')
+                .insert([{
+                    user_id: currentUserProfile.id,
+                    task_id: currentTaskId,
+                    proof_text: proofText,
+                    screenshot_url: screenshotUrl,
+                    status: 'pending'
+                }]);
+
+            if (subErr) throw subErr;
+
+            // Save UPI ID to profile
+            await supabase.from('profiles').update({ upi_id: upi }).eq('id', currentUserProfile.id);
+            currentUserProfile.upi_id = upi;
+            localStorage.setItem('rem_upi', upi);
+
+            alert("Proof submitted successfully! Admin will review shortly.");
+            closeModal('submitModal');
+            loadStatus();
+        } catch (err) {
+            console.error(err);
+            alert("Submission error: " + (err.message || "Failed to submit"));
+        } finally {
+            btn.innerText = "Upload & Submit";
+            btn.disabled = false;
+            fileInput.value = '';
+        }
+    }
 
     <!-- Withdraw Modal -->
     <div class="modal" id="withdrawModal">
