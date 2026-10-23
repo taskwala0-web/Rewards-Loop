@@ -4,27 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MicroTask - Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F7F2; }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+<body class="text-zinc-900 min-h-screen p-4 sm:p-8">
   
-  <div class="container mx-auto px-4 py-8">
-    <header class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
-      <h1 class="text-2xl font-bold text-emerald-400">⚡ MicroTask Admin Panel</h1>
-      <span id="admin-status" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300">Checking Auth...</span>
+  <div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8 bg-white p-5 rounded-2xl shadow-sm border border-zinc-200">
+      <div>
+        <h1 class="text-2xl font-extrabold text-[#7357D8]">⚡ Admin Dashboard</h1>
+        <p class="text-xs text-zinc-500 font-semibold mt-1">Review proofs & approve payouts</p>
+      </div>
+      <span id="admin-status" class="text-xs font-bold bg-[#FFD84D] text-zinc-900 px-3 py-1.5 rounded-full shadow-sm">
+        Verifying Admin...
+      </span>
     </header>
 
-    <!-- Admin Content Section -->
-    <div id="admin-content" class="space-y-8">
-      
-      <!-- Pending Submissions Section -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h2 class="text-xl font-semibold mb-4 text-violet-400">📋 Pending Task Submissions</h2>
-        <div id="submissions-list" class="overflow-x-auto">
-          <p class="text-slate-400">Loading submissions...</p>
-        </div>
+    <!-- Submissions Card -->
+    <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-zinc-900">📋 Pending Submissions</h2>
+        <button onclick="loadPendingSubmissions()" class="text-xs font-bold text-[#7357D8] hover:underline">
+          🔄 Refresh
+        </button>
       </div>
 
+      <div id="submissions-list" class="overflow-x-auto">
+        <p class="text-zinc-400 text-sm">Checking for submissions...</p>
+      </div>
     </div>
   </div>
 
@@ -32,35 +43,34 @@
     import { supabase } from './supabase.js';
 
     async function checkAdminAndLoad() {
-      // 1. Check current logged-in user
-      const { data: { user } } = await supabase.auth.getUser();
+      const userId = localStorage.getItem('rem_user_id');
       
-      if (!user) {
-        document.getElementById('admin-status').innerText = 'Not Logged In';
-        alert('Please login first!');
+      if (!userId) {
+        alert('Please login first on the user page!');
         window.location.href = 'index.html';
         return;
       }
 
-      // 2. Check if user is admin
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single();
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
-      if (!profile || !profile.is_admin) {
-        document.getElementById('admin-status').innerText = 'Access Denied';
-        alert('Access Denied! Admins only.');
+      if (error || !profile || !profile.is_admin) {
+        alert('Access Denied! You are not marked as Admin in Supabase.');
         window.location.href = 'index.html';
         return;
       }
 
-      document.getElementById('admin-status').innerText = 'Logged in as Admin';
+      document.getElementById('admin-status').innerText = `Admin: ${profile.mobile || 'Verified'}`;
       loadPendingSubmissions();
     }
 
-    async function loadPendingSubmissions() {
+    window.loadPendingSubmissions = async function() {
+      const container = document.getElementById('submissions-list');
+      container.innerHTML = `<p class="text-zinc-400 text-sm">Loading pending proofs...</p>`;
+
       const { data: subs, error } = await supabase
         .from('submissions')
         .select(`
@@ -68,41 +78,56 @@
           proof_text,
           screenshot_url,
           created_at,
-          profiles (email),
+          profiles (mobile, upi_id),
           tasks (title, reward_amount)
         `)
-        .eq('status', 'pending');
-
-      const container = document.getElementById('submissions-list');
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
 
       if (error || !subs || subs.length === 0) {
-        container.innerHTML = `<p class="text-slate-400">No pending submissions found.</p>`;
+        container.innerHTML = `<p class="text-zinc-400 text-sm py-4">No pending submissions found. All caught up! 🎉</p>`;
         return;
       }
 
       let html = `
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="border-b border-slate-800 text-slate-400 text-sm">
+            <tr class="border-b border-zinc-200 text-zinc-500 text-xs font-bold">
               <th class="p-3">User</th>
-              <th class="p-3">Task</th>
-              <th class="p-3">Proof</th>
-              <th class="p-3">Action</th>
+              <th class="p-3">Task & Reward</th>
+              <th class="p-3">Proof / Note</th>
+              <th class="p-3">Screenshot</th>
+              <th class="p-3 text-right">Action</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-zinc-100 text-sm">
       `;
 
       subs.forEach(sub => {
         html += `
-          <tr class="border-b border-slate-900 hover:bg-slate-850">
-            <td class="p-3 text-sm">${sub.profiles?.email || 'Unknown'}</td>
-            <td class="p-3 font-medium text-emerald-400">${sub.tasks?.title} (₹${sub.tasks?.reward_amount})</td>
+          <tr class="hover:bg-zinc-50">
             <td class="p-3">
-              <a href="${sub.screenshot_url}" target="_blank" class="text-violet-400 underline text-sm">View Screenshot</a>
+              <div class="font-bold text-zinc-900">${sub.profiles?.mobile || 'User'}</div>
+              <div class="text-xs text-zinc-400 font-semibold">${sub.profiles?.upi_id || 'No UPI'}</div>
             </td>
             <td class="p-3">
-              <button onclick="approveTask('${sub.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-sm font-medium transition">Approve & Pay</button>
+              <div class="font-bold text-zinc-800">${sub.tasks?.title || 'Task'}</div>
+              <span class="inline-block bg-[#EDE9FE] text-[#7357D8] text-xs font-extrabold px-2 py-0.5 rounded mt-0.5">
+                +₹${sub.tasks?.reward_amount || 0}
+              </span>
+            </td>
+            <td class="p-3 text-xs text-zinc-600 max-w-xs">
+              ${sub.proof_text || '<span class="text-zinc-400 italic">No note provided</span>'}
+            </td>
+            <td class="p-3">
+              <a href="${sub.screenshot_url}" target="_blank" class="inline-flex items-center text-xs font-bold text-[#7357D8] bg-[#F3F0FF] hover:bg-[#EDE9FE] px-2.5 py-1.5 rounded-lg border border-[#DDD6FE]">
+                🔍 View Proof
+              </a>
+            </td>
+            <td class="p-3 text-right">
+              <button onclick="approveTask('${sub.id}')" class="bg-[#FFD84D] hover:bg-[#FACC15] text-zinc-900 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition">
+                Approve & Pay ⚡
+              </button>
             </td>
           </tr>
         `;
@@ -110,18 +135,19 @@
 
       html += `</tbody></table>`;
       container.innerHTML = html;
-    }
+    };
 
-    // Global function for approval button
     window.approveTask = async function(subId) {
+      if (!confirm("Are you sure you want to approve this task and credit wallet?")) return;
+
       const { error } = await supabase.rpc('approve_submission', { sub_id: subId });
       if (error) {
         alert('Error approving task: ' + error.message);
       } else {
-        alert('Task approved successfully & wallet credited!');
+        alert('Task Approved! Balance credited to user wallet. 🚀');
         loadPendingSubmissions();
       }
-    }
+    };
 
     checkAdminAndLoad();
   </script>
