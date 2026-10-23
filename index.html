@@ -272,21 +272,17 @@
 
     <div class="container" id="mainContent">
         <!-- Referral Loop Banner -->
-        <div class="referral-banner" id="refBanner" style="display:none;">
-            <h4>🎁 Invite Friends & Earn ₹5 Bonus</h4>
-            <p>Dost ke pehle task approve hote hi aapko ₹5 direct milenge!</p>
-            <div class="ref-box">
-                <div>
-                    <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; display:block;">Your Invite Code</span>
-                    <span class="ref-code-txt" id="displayMyRefCode">---</span>
-                </div>
-                <button class="btn-copy-ref" id="btnShareInvite" onclick="shareReferralLink()">Copy Link 🔗</button>
-            </div>
+<div class="referral-banner" id="refBanner" style="display:none;">
+    <h4>🎁 Invite Friends & Earn ₹30 Bonus</h4>
+    <p>Dost ke pehla task approve hote hi aapko flat ₹30 direct wallet mein milenge!</p>
+    <div class="ref-box">
+        <div>
+            <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; display:block;">Your Invite Code</span>
+            <span class="ref-code-txt" id="displayMyRefCode">---</span>
         </div>
-
-        <h3 class="section-title">Available Offers</h3>
-        <div id="tasksContainer"><p style="color: var(--text-sec);">Loading tasks...</p></div>
+        <button class="btn-copy-ref" id="btnShareInvite" onclick="shareReferralLink()">Copy Link 🔗</button>
     </div>
+</div>
 
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
@@ -400,7 +396,7 @@
             const btn = document.getElementById('btnShareInvite');
             btn.innerText = "Link Copied! 📋";
             setTimeout(() => { btn.innerText = "Copy Link 🔗"; }, 2500);
-            alert(`Referral Link Copied:\n${refUrl}\n\nShare this with friends! When their first task is approved, you get ₹5.`);
+            alert(`Referral Link Copied:\n${refUrl}\n\nShare this with friends! When their first task is approved, you get ₹30.`);
         });
     };
 
