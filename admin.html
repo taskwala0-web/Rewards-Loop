@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MicroTask - Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  
+  <div class="container mx-auto px-4 py-8">
+    <header class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
+      <h1 class="text-2xl font-bold text-emerald-400">⚡ MicroTask Admin Panel</h1>
+      <span id="admin-status" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300">Checking Auth...</span>
+    </header>
+
+    <!-- Admin Content Section -->
+    <div id="admin-content" class="space-y-8">
+      
+      <!-- Pending Submissions Section -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <h2 class="text-xl font-semibold mb-4 text-violet-400">📋 Pending Task Submissions</h2>
+        <div id="submissions-list" class="overflow-x-auto">
+          <p class="text-slate-400">Loading submissions...</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from './supabase.js';
+
+    async function checkAdminAndLoad() {
+      // 1. Check current logged-in user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        document.getElementById('admin-status').innerText = 'Not Logged In';
+        alert('Please login first!');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // 2. Check if user is admin
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile || !profile.is_admin) {
+        document.getElementById('admin-status').innerText = 'Access Denied';
+        alert('Access Denied! Admins only.');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      document.getElementById('admin-status').innerText = 'Logged in as Admin';
+      loadPendingSubmissions();
+    }
+
+    async function loadPendingSubmissions() {
+      const { data: subs, error } = await supabase
+        .from('submissions')
+        .select(`
+          id,
+          proof_text,
+          screenshot_url,
+          created_at,
+          profiles (email),
+          tasks (title, reward_amount)
+        `)
+        .eq('status', 'pending');
+
+      const container = document.getElementById('submissions-list');
+
+      if (error || !subs || subs.length === 0) {
+        container.innerHTML = `<p class="text-slate-400">No pending submissions found.</p>`;
+        return;
+      }
+
+      let html = `
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 text-sm">
+              <th class="p-3">User</th>
+              <th class="p-3">Task</th>
+              <th class="p-3">Proof</th>
+              <th class="p-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      subs.forEach(sub => {
+        html += `
+          <tr class="border-b border-slate-900 hover:bg-slate-850">
+            <td class="p-3 text-sm">${sub.profiles?.email || 'Unknown'}</td>
+            <td class="p-3 font-medium text-emerald-400">${sub.tasks?.title} (₹${sub.tasks?.reward_amount})</td>
+            <td class="p-3">
+              <a href="${sub.screenshot_url}" target="_blank" class="text-violet-400 underline text-sm">View Screenshot</a>
+            </td>
+            <td class="p-3">
+              <button onclick="approveTask('${sub.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-sm font-medium transition">Approve & Pay</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    // Global function for approval button
+    window.approveTask = async function(subId) {
+      const { error } = await supabase.rpc('approve_submission', { sub_id: subId });
+      if (error) {
+        alert('Error approving task: ' + error.message);
+      } else {
+        alert('Task approved successfully & wallet credited!');
+        loadPendingSubmissions();
+      }
+    }
+
+    checkAdminAndLoad();
+  </script>
+</body>
+</html>
