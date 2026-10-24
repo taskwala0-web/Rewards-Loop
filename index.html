@@ -485,18 +485,19 @@ ${t.referral_code ? `
     window.closeModal = function(modalId) {
         document.getElementById(modalId).style.display = 'none';
     };
-// TASK GUIDE MODAL FUNCTIONS
-    window.openTaskGuide = function(title, guideText) {
+// TASK TUTORIAL MODAL FUNCTION (Error-free using index)
+    window.openTaskGuide = function(idx) {
+        const t = window.activeTasksList ? window.activeTasksList[idx] : null;
+        if (!t) return;
+
         const guideModal = document.getElementById('guideModal');
         const titleEl = document.getElementById('guideTaskTitle');
         const contentEl = document.getElementById('guideTaskContent');
 
         if (!guideModal || !titleEl || !contentEl) return;
 
-        titleEl.innerText = title + ' - Step by Step';
-        contentEl.innerText = guideText && guideText !== 'null' && guideText.trim() !== '' 
-            ? guideText 
-            : "1. Diye gaye link se app install karein.\n2. Mobile number aur basic details se registration karein.\n3. Task ke steps complete karein aur final success screenshot submit karein.";
+        titleEl.innerText = t.title + ' - Tutorial';
+        contentEl.innerText = t.detailed_guide || t.description || "1. Link se app install karein.\n2. Registration complete karein.\n3. Final screenshot submit karein.";
 
         guideModal.style.display = 'flex';
     };
@@ -757,7 +758,8 @@ ${t.referral_code ? `
                 }
             }
 
-            // 3. Render cards with dynamic button state
+          // 3. Render cards with dynamic button state
+            window.activeTasksList = tasks;
             taskDiv.innerHTML = tasks.map((t, idx) => {
                 const isAlreadyDone = submittedTaskIds.has(t.id);
                 return `
@@ -773,6 +775,11 @@ ${t.referral_code ? `
                         <button class="btn-code-copy" id="btnCode_${idx}" onclick="copyTaskCode('${t.referral_code}', 'btnCode_${idx}')">📋 Copy Code</button>
                     </div>` : ''}
 
+                    <!-- TUTORIAL BUTTON -->
+                    <button class="btn-guide-trigger" onclick="openTaskGuide(${idx})">
+                        📖 Tutorial
+                    </button>
+
                     <div class="btn-group">
                         <button class="btn-half btn-outline" onclick="openLink('${t.action_url}')">Open Link</button>
                         ${isAlreadyDone 
@@ -782,11 +789,6 @@ ${t.referral_code ? `
                     </div>
                 </div>
             `}).join('');
-        } catch (e) {
-            console.error(e);
-            taskDiv.innerHTML = "<p style='color: #EF4444;'>Failed to load tasks from database.</p>";
-        }
-    };
 
     // SUBMIT PROOF WITH DUPLICATE HASH STORAGE
     window.submitProof = async function() {
