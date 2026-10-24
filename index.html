@@ -443,19 +443,24 @@
     <div style="margin-top:16px; background:#FEF3C7; border:1px solid #FCD34D; border-radius:10px; padding:10px 12px; font-size:0.8rem; color:#92400E; font-weight:600;">
       💡 Zero-Loss Tip: Diye gaye steps ke mutabiq hi micro-deposit ya micro-trade karein taaki aapka ₹0 loss ho aur cashback turant mile!
     </div>
+${t.referral_code ? `
+                    <div class="task-code-box">
+                        <span class="task-code-val">Code: <b>${t.referral_code}</b></span>
+                        <button class="btn-code-copy" id="btnCode_${idx}" onclick="copyTaskCode('${t.referral_code}', 'btnCode_${idx}')">📋 Copy Code</button>
+                    </div>` : ''}
 
-    <button onclick="closeGuideModal()" style="margin-top:16px; width:100%; background:#7357D8; color:#FFF; border:none; padding:12px; border-radius:10px; font-weight:700; cursor:pointer;">Samajh Gaya 👍</button>
-  </div>
-</div>
-    <!-- Withdraw Modal -->
-    <div class="modal" id="withdrawModal">
-        <div class="modal-content">
-            <h2>Withdraw to UPI</h2>
-            <p style="color: var(--text-sec); font-size: 0.9rem; margin: 4px 0 14px 0;">Minimum withdrawal is ₹50.</p>
-            
-            <input type="number" id="wdAmount" placeholder="Amount (Min ₹50)">
-            <input type="text" id="wdUpi" placeholder="Your UPI ID">
-            
+                    <!-- KAISE KAREIN GUIDE BUTTON -->
+                    <button class="btn-guide-trigger" onclick="openTaskGuide('${t.title.replace(/'/g, "\\'")}', \`${(t.detailed_guide || t.description || '').replace(/`/g, '\\`')}\`)">
+                        📖 Kaise Karein? (Step-by-Step Guide)
+                    </button>
+
+                    <div class="btn-group">
+                        <button class="btn-half btn-outline" onclick="openLink('${t.action_url}')">Open Link</button>
+                        ${isAlreadyDone 
+                            ? `<button class="btn-half" disabled>Submitted ✅</button>`
+                            : `<button class="btn-half btn-action" onclick="openSubmitModal('${t.id}', '${t.title}')">Submit Proof</button>`
+                        }
+                    </div>
             <button id="btnWithdraw" class="btn-action" onclick="requestWithdraw()">Withdraw ⚡</button>
             <button class="btn-outline" onclick="closeModal('withdrawModal')">Close</button>
         </div>
@@ -480,7 +485,26 @@
     window.closeModal = function(modalId) {
         document.getElementById(modalId).style.display = 'none';
     };
+// TASK GUIDE MODAL FUNCTIONS
+    window.openTaskGuide = function(title, guideText) {
+        const guideModal = document.getElementById('guideModal');
+        const titleEl = document.getElementById('guideTaskTitle');
+        const contentEl = document.getElementById('guideTaskContent');
 
+        if (!guideModal || !titleEl || !contentEl) return;
+
+        titleEl.innerText = title + ' - Step by Step';
+        contentEl.innerText = guideText && guideText !== 'null' && guideText.trim() !== '' 
+            ? guideText 
+            : "1. Diye gaye link se app install karein.\n2. Mobile number aur basic details se registration karein.\n3. Task ke steps complete karein aur final success screenshot submit karein.";
+
+        guideModal.style.display = 'flex';
+    };
+
+    window.closeGuideModal = function() {
+        const guideModal = document.getElementById('guideModal');
+        if (guideModal) guideModal.style.display = 'none';
+    };
     // 1-TAP REFERRAL/PROMO CODE COPY
     window.copyTaskCode = function(code, btnId) {
         navigator.clipboard.writeText(code).then(() => {
