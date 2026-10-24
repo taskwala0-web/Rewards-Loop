@@ -368,7 +368,7 @@
         <button class="btn-copy-ref" id="btnShareInvite" onclick="shareReferralLink()">Copy Link 🔗</button>
     </div>
 </div>
-
+</div>        
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <div class="nav-item active" id="navTasks" onclick="loadTasks()">
@@ -443,10 +443,24 @@
     <div style="margin-top:16px; background:#FEF3C7; border:1px solid #FCD34D; border-radius:10px; padding:10px 12px; font-size:0.8rem; color:#92400E; font-weight:600;">
       💡 Zero-Loss Tip: Diye gaye steps ke mutabiq hi micro-deposit ya micro-trade karein taaki aapka ₹0 loss ho aur cashback turant mile!
     </div>
-<button onclick="closeGuideModal()" style="margin-top:16px; width:100%; background:#7357D8; color:#FFF; border:none; padding:12px; border-radius:10px; font-weight:700; cursor:pointer;">Samajh Gaya 👍</button>
+
+    <button onclick="closeGuideModal()" style="margin-top:16px; width:100%; background:#7357D8; color:#FFF; border:none; padding:12px; border-radius:10px; font-weight:700; cursor:pointer;">Samajh Gaya 👍</button>
   </div>
 </div>
 
+    <!-- Withdraw Modal -->
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content">
+            <h2>Withdraw to UPI</h2>
+            <p style="color: var(--text-sec); font-size: 0.9rem; margin: 4px 0 14px 0;">Minimum withdrawal is ₹50.</p>
+            
+            <input type="number" id="wdAmount" placeholder="Amount (Min ₹50)">
+            <input type="text" id="wdUpi" placeholder="Your UPI ID">
+            
+            <button id="btnWithdraw" class="btn-action" onclick="requestWithdraw()">Withdraw ⚡</button>
+            <button class="btn-outline" onclick="closeModal('withdrawModal')">Close</button>
+        </div>
+    </div>
     <!-- Withdraw Modal -->
     <div class="modal" id="withdrawModal">
         <div class="modal-content">
@@ -784,11 +798,12 @@
                     </div>
                 </div>
             `}).join('');
-       } catch (e) {
+            } catch (e) {
             console.error(e);
             taskDiv.innerHTML = "<p style='color: #EF4444;'>Failed to load tasks from database.</p>";
         }
     };
+       
     // SUBMIT PROOF WITH DUPLICATE HASH STORAGE
     window.submitProof = async function() {
         const fileInput = document.getElementById('proofImage');
