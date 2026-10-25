@@ -346,6 +346,61 @@
             font-weight: 700;
             cursor: pointer;
         }
+        /* Filter & Sorting Chips */
+.filter-scroll-container {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    scrollbar-width: none;
+}
+.filter-scroll-container::-webkit-scrollbar { display: none; }
+.filter-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-sec);
+    padding: 7px 14px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.filter-chip.active {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: var(--primary);
+    color: #FFF;
+}
+
+/* Smart Withdrawal Push Banner */
+.wd-push-banner {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.2) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.wd-push-text { font-size: 0.82rem; color: #FCD34D; line-height: 1.4; font-weight: 600; }
+.wd-push-text b { color: #FFF; font-weight: 800; }
+.btn-wd-target {
+    background: #FFD84D;
+    color: #0F172A;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+    margin: 0;
+    width: auto;
+}
     </style>
 </head>
 <body>
@@ -726,21 +781,112 @@
         }
     }
 
-    // LOAD ACTIVE TASKS WITH 1-USER-1-TASK CHECK
+   
+// Current Active Filter State
+    window.currentTaskFilter = 'all';
+
+    // Filter Switcher
+    window.setTaskFilter = function(filterType) {
+        window.currentTaskFilter = filterType;
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        const activeChip = document.getElementById(`filter_${filterType}`);
+        if (activeChip) activeChip.classList.add('active');
+        window.renderFilteredTasks();
+    };
+
+    // RENDER FILTERED & SORTED TASKS
+    window.renderFilteredTasks = function() {
+        const taskDiv = document.getElementById('tasksContainer');
+        if (!window.activeTasksList || !taskDiv) return;
+
+        let displayTasks = [...window.activeTasksList];
+
+        // 1. Ranking & Filter System
+        if (window.currentTaskFilter === 'high') {
+            displayTasks.sort((a, b) => parseFloat(b.reward_amount || 0) - parseFloat(a.reward_amount || 0));
+        } else if (window.currentTaskFilter === 'easy') {
+            // Priority to low micro-actions (Jar, BHIM, UPI, Gold)
+            displayTasks.sort((a, b) => {
+                const easyKeywords = ['₹1', 'save', 'upi', 'gold', 'bhim'];
+                const aDesc = ((a.title || '') + (a.description || '')).toLowerCase();
+                const bDesc = ((b.title || '') + (b.description || '')).toLowerCase();
+                const aIsEasy = easyKeywords.some(k => aDesc.includes(k)) ? 1 : 0;
+                const bIsEasy = easyKeywords.some(k => bDesc.includes(k)) ? 1 : 0;
+                return bIsEasy - aIsEasy;
+            });
+        }
+
+        taskDiv.innerHTML = displayTasks.map((t, idx) => {
+            const isAlreadyDone = window.userDoneTaskIds ? window.userDoneTaskIds.has(t.id) : false;
+            return `
+            <div class="task-card" id="task_card_${t.id}">
+                <span class="task-payout">₹${t.reward_amount}</span>
+                <div class="badge">${t.category}</div>
+                <div class="task-title">${t.title}</div>
+                <p class="task-desc">${t.description}</p>
+                
+                ${t.referral_code ? `
+                <div class="task-code-box">
+                    <span class="task-code-val">Code: <b>${t.referral_code}</b></span>
+                    <button class="btn-code-copy" id="btnCode_${idx}" onclick="copyTaskCode('${t.referral_code}', 'btnCode_${idx}')">📋 Copy Code</button>
+                </div>` : ''}
+
+                <!-- TUTORIAL BUTTON -->
+                <button class="btn-guide-trigger" onclick="openTaskGuide(${idx})">
+                    📖 Tutorial
+                </button>
+
+                <div class="btn-group">
+                    <button class="btn-half btn-outline" onclick="openLink('${t.action_url}')">Open Link</button>
+                    ${isAlreadyDone 
+                        ? `<button class="btn-half" disabled>Submitted ✅</button>`
+                        : `<button class="btn-half btn-action" onclick="openSubmitModal('${t.id}', '${t.title.replace(/'/g, "\\'")}')">Submit Proof</button>`
+                    }
+                </div>
+            </div>
+        `}).join('');
+    };
+
+    // LOAD ACTIVE TASKS
     window.loadTasks = async function() {
         document.getElementById('navTasks').classList.add('active');
         document.getElementById('navStatus').classList.remove('active');
         
+        const bal = parseFloat(currentUserProfile?.wallet_balance || 0);
+        const needed = 50 - bal;
+
+        // Dynamic Withdrawal Hack Banner: Agar bal < ₹50 aur bal > 0 hai
+        let withdrawalPushHtml = '';
+        if (bal > 0 && bal < 50) {
+            withdrawalPushHtml = `
+            <div class="wd-push-banner">
+                <div class="wd-push-text">
+                    ⚡ Aap withdrawal se sirf <b>₹${needed}</b> door ho!<br>
+                    Koi bhi 1 task karo aur instant <b>₹50</b> apne UPI me transfer karo!
+                </div>
+                <button class="btn-wd-target" onclick="window.scrollTo({top: 250, behavior: 'smooth'})">Complete Now 🚀</button>
+            </div>
+            `;
+        }
+
         const container = document.getElementById('mainContent');
         container.innerHTML = `
-            ${document.getElementById('refBanner').outerHTML}
-            <h3 class="section-title">Available Offers</h3>
+            ${document.getElementById('refBanner') ? document.getElementById('refBanner').outerHTML : ''}
+            
+            ${withdrawalPushHtml}
+
+            <!-- Task Sorting & Ranking Filter Chips -->
+            <div class="filter-scroll-container">
+                <div class="filter-chip active" id="filter_all" onclick="setTaskFilter('all')">⚡ All Offers</div>
+                <div class="filter-chip" id="filter_high" onclick="setTaskFilter('high')">🔥 Highest Payout (₹100+)</div>
+                <div class="filter-chip" id="filter_easy" onclick="setTaskFilter('easy')">🎯 2-Min Easy Tasks</div>
+            </div>
+
             <div id="tasksContainer"><p style="color: var(--text-sec);">Loading tasks...</p></div>
         `;
         const taskDiv = document.getElementById('tasksContainer');
 
         try {
-            // 1. Fetch active tasks
             const { data: tasks, error: taskErr } = await supabase
                 .from('tasks')
                 .select('*')
@@ -753,6 +899,29 @@
                 taskDiv.innerHTML = "<p style='color: var(--text-sec);'>No active tasks right now. Check back later!</p>";
                 return;
             }
+
+            let submittedTaskIds = new Set();
+            if (currentUserProfile) {
+                const { data: userSubs } = await supabase
+                    .from('submissions')
+                    .select('task_id')
+                    .eq('user_id', currentUserProfile.id);
+
+                if (userSubs) {
+                    submittedTaskIds = new Set(userSubs.map(s => s.task_id));
+                }
+            }
+
+            window.activeTasksList = tasks;
+            window.userDoneTaskIds = submittedTaskIds;
+
+            window.renderFilteredTasks();
+
+        } catch (e) {
+            console.error(e);
+            taskDiv.innerHTML = "<p style='color: #EF4444;'>Failed to load tasks from database.</p>";
+        }
+    };
 
             // 2. Fetch user's previous submissions to prevent multiple attempts
             let submittedTaskIds = new Set();
@@ -964,8 +1133,8 @@
         }
     };
 
-    // INITIAL LOAD & AUTO-FILL REFERRAL CODE FROM URL
-    window.onload = async () => {
+    // INITIAL LOAD (Instant Auto-Trigger without refresh)
+    async function initApp() {
         const urlParams = new URLSearchParams(window.location.search);
         const refParam = urlParams.get('ref');
         if (refParam) {
@@ -977,22 +1146,35 @@
         if (!savedId) {
             document.getElementById('authModal').style.display = 'flex';
         } else {
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', savedId)
-                .maybeSingle();
+            try {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', savedId)
+                    .maybeSingle();
 
-            if (profile) {
-                currentUserProfile = profile;
-                updateWalletUI(profile.wallet_balance || 0);
-                initUserBanner();
-                loadTasks();
-            } else {
-                document.getElementById('authModal').style.display = 'flex';
+                if (profile) {
+                    currentUserProfile = profile;
+                    updateWalletUI(profile.wallet_balance || 0);
+                    initUserBanner();
+                } else {
+                    document.getElementById('authModal').style.display = 'flex';
+                }
+            } catch (err) {
+                console.error("Profile error:", err);
             }
         }
-    };
+        
+        // Tasks hamesha first visit par instant load honge
+        loadTasks();
+    }
+
+    // Agar DOM pehle se ready hai toh turant chalao, wait mat karo
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+        initApp();
+    }
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW register failed', err));
