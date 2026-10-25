@@ -352,9 +352,7 @@
         const t = window.activeTasksList[idx];
         if (!t) return;
         document.getElementById('guideTaskTitle').innerText = t.title + ' - Tutorial';
-        document.getElementById('guideTaskContent').innerText = t.detailed_guide || t.description || "1. App install karein.
-2. Register karein.
-3. Screenshot submit karein.";
+        document.getElementById('guideTaskContent').innerText = t.detailed_guide || t.description || "1. App install karein.\n2. Register karein.\n3. Screenshot submit karein.";
         document.getElementById('guideModal').style.display = 'flex';
     };
     window.closeGuideModal = function() { document.getElementById('guideModal').style.display = 'none'; };
@@ -393,10 +391,7 @@
         if (!currentUserProfile?.referral_code) return;
         const refUrl = `${window.location.origin}${window.location.pathname}?ref=${currentUserProfile.referral_code}`;
         navigator.clipboard.writeText(refUrl).then(() => {
-            alert(`Referral Link Copied:
-${refUrl}
-
-Share this with friends! You get ₹30 per friend.`);
+            alert(`Referral Link Copied:\n${refUrl}\n\nShare this with friends! You get ₹30 per friend.`);
         });
     };
 
@@ -503,7 +498,7 @@ Share this with friends! You get ₹30 per friend.`);
                     <button class="btn-half btn-outline" onclick="openLink('${t.action_url}')">Open Link</button>
                     ${isDone 
                         ? `<button class="btn-half" disabled>Submitted ✅</button>`
-                        : `<button class="btn-half btn-action" onclick="openSubmitModal('${t.id}', '${t.title.replace(/'/g, "\'")}')">Submit Proof</button>`
+                        : `<button class="btn-half btn-action" onclick="openSubmitModal('${t.id}', '${t.title.replace(/'/g, "\\'")}')">Submit Proof</button>`
                     }
                 </div>
             </div>`;
