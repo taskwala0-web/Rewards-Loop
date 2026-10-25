@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TaskWala - Earn Rewards</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#7357D8">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <style>
+        /* =========================================
+           1. CSS VARIABLES (LIGHT UI THEME)
+        ========================================= */
+        :root {
+            --bg: #F8F7F2;
+            --surface: #FFFFFF;
+            --primary: #7357D8;
+            --primary-hover: #5d3fc8;
+            --accent: #FFD84D;
+            --accent-hover: #f5cc38;
+            --text-main: #18181B;
+            --text-sec: #71717A;
+            --border: #E4E4E7;
+            --card-shadow: 0 4px 20px -2px rgba(115, 87, 216, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--text-main); padding-bottom: 90px; min-height: 100vh; }
+
+        /* =========================================
+           2. HEADER & LAYOUT
+        ========================================= */
+        header { 
+            padding: 16px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid var(--border); 
+            background: var(--surface); 
+            position: sticky; 
+            top: 0; 
+            z-index: 50; 
+        }
+        .logo { font-weight: 800; font-size: 1.25rem; color: var(--primary); letter-spacing: -0.5px; }
+        .wallet-chip { 
+            background: var(--accent); 
+            color: #18181B; 
+            padding: 7px 14px; 
+            border-radius: 9999px; 
+            font-weight: 700; 
+            font-size: 0.9rem; 
+            cursor: pointer; 
+            box-shadow: 0 2px 6px rgba(255, 216, 77, 0.4); 
+            transition: transform 0.15s ease;
+        }
+        .wallet-chip:active { transform: scale(0.95); }
+
+        .container { padding: 20px 16px; max-width: 580px; margin: auto; }
+        .section-title { font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 14px; }
+
+        /* =========================================
+           3. BANNERS (REFERRAL & PUSH)
+        ========================================= */
+        .referral-banner {
+            background: linear-gradient(135deg, #7357D8 0%, #5235B8 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 20px rgba(115, 87, 216, 0.25);
+        }
+        .referral-banner h4 { font-size: 1.05rem; font-weight: 800; margin-bottom: 4px; }
+        .referral-banner p { font-size: 0.8rem; opacity: 0.9; margin-bottom: 12px; }
+        .ref-box {
+            display: flex; gap: 8px; background: rgba(255, 255, 255, 0.15); padding: 8px 12px;
+            border-radius: 10px; align-items: center; justify-content: space-between;
+        }
+        .ref-code-txt { font-family: monospace; font-size: 1rem; font-weight: 800; letter-spacing: 1px; color: var(--accent); }
+        .btn-copy-ref {
+            background: var(--accent); color: #18181B; border: none; padding: 6px 12px;
+            border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; width: auto; margin: 0;
+        }
+
+        .wd-push-banner {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+            border: 1px solid #FCD34D;
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .wd-push-text { font-size: 0.82rem; color: #92400E; line-height: 1.4; font-weight: 600; }
+        .wd-push-text b { color: #78350F; font-weight: 800; }
+        .btn-wd-target {
+            background: #18181B; color: #FFF; border: none; padding: 8px 12px;
+            border-radius: 10px; font-size: 0.75rem; font-weight: 800; cursor: pointer; width: auto; margin: 0;
+        }
+
+        /* =========================================
+           4. FILTERS & CHIPS
+        ========================================= */
+        .filter-scroll-container {
+            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 10px; scrollbar-width: none;
+        }
+        .filter-scroll-container::-webkit-scrollbar { display: none; }
+        .filter-chip {
+            background: var(--surface); border: 1px solid var(--border); color: var(--text-sec);
+            padding: 8px 14px; border-radius: 9999px; font-size: 0.8rem; font-weight: 700;
+            white-space: nowrap; cursor: pointer; transition: all 0.2s ease;
+        }
+        .filter-chip.active { background: rgba(115, 87, 216, 0.15); border-color: var(--primary); color: var(--primary); }
+
+        /* =========================================
+           5. TASK CARDS
+        ========================================= */
+        .task-card { 
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px; 
+            padding: 18px; margin-bottom: 14px; box-shadow: var(--card-shadow); 
+        }
+        .badge { 
+            background: rgba(115, 87, 216, 0.12); padding: 4px 10px; border-radius: 9999px; 
+            font-size: 0.75rem; color: var(--primary); margin-bottom: 8px; display: inline-block; font-weight: 700; 
+        }
+        .task-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--text-main); }
+        .task-payout { 
+            font-size: 1.25rem; font-weight: 800; color: var(--primary); float: right; 
+            background: #EDE9FE; padding: 2px 10px; border-radius: 8px; 
+        }
+        .task-desc { font-size: 0.88rem; color: var(--text-sec); line-height: 1.4; margin-bottom: 14px; }
+        
+        .task-code-box {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #F4F4F5; padding: 8px 12px; border-radius: 10px; margin-bottom: 12px; border: 1px dashed #D4D4D8;
+        }
+        .task-code-val { font-family: monospace; font-weight: 700; color: #18181B; font-size: 0.9rem; }
+        .btn-code-copy { background: #18181B; color: #FFF; border: none; padding: 5px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer; width: auto; margin: 0; }
+
+        .btn-guide-trigger {
+            background: #F1F0FB; color: var(--primary); border: 1px solid #D8D2F8; border-radius: 10px;
+            padding: 10px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; width: 100%;
+            margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;
+        }
+        .btn-guide-trigger:active { background: #E8E5FA; transform: scale(0.98); }
+
+        .btn-group { display: flex; gap: 10px; }
+        .btn-half { flex: 1; padding: 11px; font-size: 0.9rem; margin-top: 0; border-radius: 10px; }
+        .btn-action { background: var(--accent); color: #18181B; }
+        .btn-action:active { transform: scale(0.98); }
+        .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text-sec); margin-top: 0; }
+
+        /* =========================================
+           6. MODALS
+        ========================================= */
+        .modal, .modal-backdrop { 
+            display: none; position: fixed; inset: 0; background: rgba(24, 24, 27, 0.7); 
+            z-index: 100; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); 
+        }
+        .modal-content { 
+            background: var(--surface); padding: 24px; border-radius: 18px; width: 100%; 
+            max-width: 440px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+        }
+        .modal-content h2 { font-weight: 800; font-size: 1.35rem; color: var(--text-main); }
+
+        input, select { 
+            width: 100%; padding: 13px 15px; margin-top: 10px; background: #FAFAFA; 
+            border: 1.5px solid var(--border); color: var(--text-main); border-radius: 12px; font-size: 0.95rem; font-weight: 600;
+        }
+        input:focus { outline: none; border-color: var(--primary); background: #FFF; }
+        
+        button { 
+            width: 100%; padding: 13px; margin-top: 14px; background: var(--primary); 
+            color: #FFFFFF; border: none; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.15s; 
+        }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #D4D4D8; color: #71717A; cursor: not-allowed; }
+
+        /* =========================================
+           7. BOTTOM NAV & UTILS
+        ========================================= */
+        .bottom-nav { 
+            position: fixed; bottom: 0; width: 100%; background: var(--surface); 
+            border-top: 1px solid var(--border); display: flex; justify-content: space-around; 
+            padding: 12px 0 14px 0; z-index: 50; 
+        }
+        .nav-item { color: var(--text-sec); font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item.active { color: var(--primary); }
+
+        .status-badge { padding: 4px 10px; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; text-transform: capitalize; }
+        .status-pending { background: #FEF3C7; color: #D97706; }
+        .status-approved, .status-paid { background: #DCFCE7; color: #15803D; }
+        .status-rejected { background: #FEE2E2; color: #B91C1C; }
+
+        footer { text-align: center; padding: 24px 16px 30px 16px; font-size: 0.75rem; color: var(--text-sec); border-top: 1px solid var(--border); margin-top: 20px; }
+        .footer-links { display: flex; justify-content: center; gap: 14px; margin-bottom: 8px; flex-wrap: wrap; }
+        .footer-links a { color: var(--primary); font-weight: 700; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- SYSTEMATIC HEADER -->
+    <header>
+        <div class="logo">⚡ TaskWala</div>
+        <div class="wallet-chip" id="walletChip" onclick="openWithdrawModal()">Wallet: ₹0</div>
+    </header>
+
+    <!-- SYSTEMATIC MAIN CONTENT CONTAINER -->
+    <div class="container" id="mainContent">
+        
+        <!-- Area 1: Dynamic Banners (Referral & Smart Push) -->
+        <div id="dynamicBanners"></div>
+
+        <!-- Area 2: Filter Chips -->
+        <div id="filterSection" class="filter-scroll-container" style="display: none;">
+            <div class="filter-chip active" id="filter_all" onclick="setTaskFilter('all')">⚡ All Offers</div>
+            <div class="filter-chip" id="filter_high" onclick="setTaskFilter('high')">🔥 Highest Payout (₹100+)</div>
+            <div class="filter-chip" id="filter_easy" onclick="setTaskFilter('easy')">🎯 2-Min Easy Tasks</div>
+        </div>
+
+        <!-- Area 3: Section Title -->
+        <h3 class="section-title" id="sectionTitle">Available Offers</h3>
+
+        <!-- Area 4: Rendered Cards / Status List -->
+        <div id="dynamicContainer">
+            <p style="color: var(--text-sec);">Initializing app...</p>
+        </div>
+        
+    </div>
+
+    <!-- SYSTEMATIC BOTTOM NAV -->
+    <div class="bottom-nav">
+        <div class="nav-item active" id="navTasks" onclick="loadTasks()">
+            <span style="font-size: 1.1rem;">📋</span> Tasks
+        </div>
+        <div class="nav-item" id="navStatus" onclick="loadStatus()">
+            <span style="font-size: 1.1rem;">🕒</span> Status
+        </div>
+    </div>
+
+    <!-- SYSTEMATIC FOOTER -->
+    <footer>
+        <div class="footer-links">
+            <a onclick="openLegalModal('privacy')">Privacy Policy</a>
+            <span>•</span>
+            <a onclick="openLegalModal('terms')">Terms of Service</a>
+            <span>•</span>
+            <a onclick="openLegalModal('grievance')">Grievance Officer</a>
+        </div>
+        <p>© 2026 TaskWala Platform. Compliant with IT Rules, 2021.</p>
+    </footer>
+
+    <!-- =========================================
+         ALL MODALS SECTION
+    ========================================= -->
+
+    <!-- 1. Auth Modal -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <h2>Welcome! 👋</h2>
+            <p style="color: var(--text-sec); font-size: 0.9rem; margin-top: 4px; margin-bottom: 14px;">Login or create your account</p>
+            <input type="tel" id="authMobile" placeholder="10-digit Mobile Number" maxlength="10" required>
+            <input type="text" id="authName" placeholder="Full Name (Leave blank if old user)">
+            <input type="password" id="authPin" placeholder="4-Digit PIN" maxlength="4" required>
+            <input type="text" id="authReferral" placeholder="Referral Code (Optional)" style="text-transform: uppercase;">
+            <button id="btnAuth" onclick="handleAuth()">Continue ⚡</button>
+        </div>
+    </div>
+
+    <!-- 2. Submit Proof Modal -->
+    <div class="modal" id="submitModal">
+        <div class="modal-content">
+            <h2>Submit Proof</h2>
+            <p id="submitTaskName" style="color: var(--primary); margin: 6px 0 14px 0; font-weight: 700; font-size: 0.95rem;"></p>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-sec);">Upload Screenshot (Max 5MB)</label>
+            <input type="file" id="proofImage" accept="image/*" onchange="validateScreenshotDuplicate(this)">
+            <div id="duplicateWarning" style="display:none; color: #DC2626; font-size: 0.8rem; font-weight: 700; margin-top: 6px;">
+                ⚠️ This screenshot has already been used! Please upload a fresh screenshot.
+            </div>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-sec); margin-top: 14px; display: block;">Optional Note / Username</label>
+            <input type="text" id="proofText" placeholder="e.g. Registered with username abc">
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-sec); margin-top: 14px; display: block;">Payout UPI ID</label>
+            <input type="text" id="upiId" placeholder="e.g. 9876543210@ybl">
+            <button id="btnSubmitProof" class="btn-action" onclick="submitProof()">Upload & Submit Proof</button>
+            <button class="btn-outline" onclick="closeModal('submitModal')">Cancel</button>
+        </div>
+    </div>
+
+    <!-- 3. Detailed Guide Modal -->
+    <div class="modal-backdrop" id="guideModal">
+      <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+          <h3 id="guideTaskTitle" style="font-size:1.1rem; font-weight:800; color:var(--text-main); margin:0;">Task Guide</h3>
+          <button onclick="closeGuideModal()" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:var(--text-sec); line-height:1; width:auto; padding:0; margin:0;">&times;</button>
+        </div>
+        <div id="guideTaskContent" style="font-size:0.9rem; line-height:1.6; color:var(--text-main); white-space:pre-line;">
+          <!-- Steps dynamic insertion -->
+        </div>
+        <div style="margin-top:16px; background:#FEF3C7; border:1px solid #FCD34D; border-radius:10px; padding:10px 12px; font-size:0.8rem; color:#92400E; font-weight:600;">
+          💡 Zero-Loss Tip: Diye gaye steps ke mutabiq hi micro-deposit ya micro-trade karein taaki aapka ₹0 loss ho aur cashback turant mile!
+        </div>
+        <button onclick="closeGuideModal()">Samajh Gaya 👍</button>
+      </div>
+    </div>
+
+    <!-- 4. Withdraw Modal -->
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content">
+            <h2>Withdraw to UPI</h2>
+            <p style="color: var(--text-sec); font-size: 0.9rem; margin: 4px 0 14px 0;">Minimum withdrawal is ₹50.</p>
+            <input type="number" id="wdAmount" placeholder="Amount (Min ₹50)">
+            <input type="text" id="wdUpi" placeholder="Your UPI ID">
+            <button id="btnWithdraw" class="btn-action" onclick="requestWithdraw()">Withdraw ⚡</button>
+            <button class="btn-outline" onclick="closeModal('withdrawModal')">Close</button>
+        </div>
+    </div>
+
+    <!-- 5. Legal & Grievance Modal -->
+    <div class="modal" id="legalModal">
+        <div class="modal-content">
+            <h2 id="legalModalTitle">Information</h2>
+            <div id="legalModalBody" style="font-size: 0.85rem; color: var(--text-sec); line-height: 1.6; margin-top: 12px;"></div>
+            <button class="btn-outline" onclick="closeModal('legalModal')" style="margin-top: 18px;">Close</button>
+        </div>
+    </div>
+
+    <!-- =========================================
+         JAVASCRIPT LOGIC
+    ========================================= -->
+<script type="module">
+    import { supabase } from './supabase.js';
+
+    // GLOBAL STATES
+    let currentTaskId = null;
+    let currentUserProfile = null;
+    let currentImageHash = null;
+    
+    window.activeTasksList = [];
+    window.userDoneTaskIds = new Set();
+    window.currentTaskFilter = 'all';
+
+    // --- UTILITIES ---
+    window.closeModal = function(modalId) { document.getElementById(modalId).style.display = 'none'; };
+    window.openLink = function(link) { window.open(link, '_blank'); };
+    function updateWalletUI(bal) { document.getElementById('walletChip').innerText = `Wallet: ₹${bal}`; }
+
+    // --- MODAL TRIGGERS ---
+    window.openTaskGuide = function(idx) {
+        const t = window.activeTasksList[idx];
+        if (!t) return;
+        document.getElementById('guideTaskTitle').innerText = t.title + ' - Tutorial';
+        document.getElementById('guideTaskContent').innerText = t.detailed_guide || t.description || "1. App install karein.\n2. Register karein.\n3. Screenshot submit karein.";
+        document.getElementById('guideModal').style.display = 'flex';
+    };
+    window.closeGuideModal = function() { document.getElementById('guideModal').style.display = 'none'; };
+
+    window.openSubmitModal = function(taskId, taskName) {
+        currentTaskId = taskId;
+        currentImageHash = null;
+        document.getElementById('submitTaskName').innerText = taskName;
+        document.getElementById('upiId').value = currentUserProfile?.upi_id || localStorage.getItem('rem_upi') || '';
+        document.getElementById('duplicateWarning').style.display = 'none';
+        document.getElementById('submitModal').style.display = 'flex';
+    };
+
+    window.openWithdrawModal = function() {
+        const bal = parseFloat(currentUserProfile?.wallet_balance || 0);
+        document.getElementById('wdAmount').value = bal;
+        document.getElementById('wdUpi').value = currentUserProfile?.upi_id || localStorage.getItem('rem_upi') || '';
+        
+        const btn = document.getElementById('btnWithdraw');
+        if (bal < 50) { btn.disabled = true; btn.innerText = "Min Withdraw ₹50"; } 
+        else { btn.disabled = false; btn.innerText = `Withdraw ₹${bal} ⚡`; }
+        document.getElementById('withdrawModal').style.display = 'flex';
+    };
+
+    // --- COPY / SHARE LOGIC ---
+    window.copyTaskCode = function(code, btnId) {
+        navigator.clipboard.writeText(code).then(() => {
+            const btn = document.getElementById(btnId);
+            const oldText = btn.innerText;
+            btn.innerText = "Copied! ✅";
+            setTimeout(() => { btn.innerText = oldText; }, 2000);
+        });
+    };
+
+    window.shareReferralLink = function() {
+        if (!currentUserProfile?.referral_code) return;
+        const refUrl = `${window.location.origin}${window.location.pathname}?ref=${currentUserProfile.referral_code}`;
+        navigator.clipboard.writeText(refUrl).then(() => {
+            alert(`Referral Link Copied:\n${refUrl}\n\nShare this with friends! You get ₹30 per friend.`);
+        });
+    };
+
+    // --- DUPLICATE HASH LOGIC ---
+    async function calculateImageHash(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    window.validateScreenshotDuplicate = async function(input) {
+        const warning = document.getElementById('duplicateWarning');
+        const submitBtn = document.getElementById('btnSubmitProof');
+        warning.style.display = 'none'; submitBtn.disabled = false; currentImageHash = null;
+
+        if (!input.files || !input.files[0]) return;
+        try {
+            currentImageHash = await calculateImageHash(input.files[0]);
+            const usedHashes = JSON.parse(localStorage.getItem('used_proof_hashes') || '[]');
+            if (usedHashes.includes(currentImageHash)) {
+                warning.style.display = 'block'; submitBtn.disabled = true; input.value = ''; return;
+            }
+            const { data: dupCheck } = await supabase.from('submissions').select('id').eq('image_hash', currentImageHash).limit(1);
+            if (dupCheck && dupCheck.length > 0) {
+                warning.style.display = 'block'; submitBtn.disabled = true; input.value = '';
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    // --- AUTHENTICATION ---
+    window.handleAuth = async function() {
+        const mobile = document.getElementById('authMobile').value.trim();
+        const name = document.getElementById('authName').value.trim();
+        const pin = document.getElementById('authPin').value.trim();
+        const inputRefCode = document.getElementById('authReferral').value.trim().toUpperCase();
+        
+        if (mobile.length !== 10) return alert("Valid 10-digit mobile required.");
+        if (pin.length !== 4) return alert("4-digit PIN required.");
+        
+        const btn = document.getElementById('btnAuth');
+        btn.innerText = "Verifying..."; btn.disabled = true;
+
+        try {
+            let { data: profile } = await supabase.from('profiles').select('*').eq('mobile', mobile).maybeSingle();
+            if (!profile) {
+                const generatedRefCode = `TW${mobile.slice(-6)}`;
+                const { data: inserted, error } = await supabase.from('profiles').insert([{
+                    mobile: mobile, full_name: name, pin: pin, wallet_balance: 0, referral_code: generatedRefCode, referred_by: inputRefCode || null
+                }]).select().single();
+                if (error) throw error;
+                profile = inserted;
+            } else if (profile.pin !== pin) {
+                alert("Incorrect PIN!"); btn.innerText = "Continue ⚡"; btn.disabled = false; return;
+            }
+            currentUserProfile = profile;
+            localStorage.setItem('rem_user_id', profile.id);
+            closeModal('authModal');
+            updateWalletUI(profile.wallet_balance || 0);
+            loadTasks();
+        } catch (err) { alert("Auth error: " + err.message); } 
+        finally { btn.innerText = "Continue ⚡"; btn.disabled = false; }
+    };
+
+    // --- FILTER & RENDER TASKS ---
+    window.setTaskFilter = function(filterType) {
+        window.currentTaskFilter = filterType;
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        const activeChip = document.getElementById(`filter_${filterType}`);
+        if (activeChip) activeChip.classList.add('active');
+        window.renderFilteredTasks();
+    };
+
+    window.renderFilteredTasks = function() {
+        const container = document.getElementById('dynamicContainer');
+        if (!window.activeTasksList || !container) return;
+
+        let displayTasks = [...window.activeTasksList];
+        if (window.currentTaskFilter === 'high') {
+            displayTasks.sort((a, b) => parseFloat(b.reward_amount || 0) - parseFloat(a.reward_amount || 0));
+        } else if (window.currentTaskFilter === 'easy') {
+            displayTasks.sort((a, b) => {
+                const keys = ['₹1', 'save', 'upi', 'gold', 'bhim'];
+                const aEasy = keys.some(k => (a.title+a.description).toLowerCase().includes(k)) ? 1 : 0;
+                const bEasy = keys.some(k => (b.title+b.description).toLowerCase().includes(k)) ? 1 : 0;
+                return bEasy - aEasy;
+            });
+        }
+
+        container.innerHTML = displayTasks.map((t, idx) => {
+            const isDone = window.userDoneTaskIds.has(t.id);
+            return `
+            <div class="task-card">
+                <span class="task-payout">₹${t.reward_amount}</span>
+                <div class="badge">${t.category}</div>
+                <div class="task-title">${t.title}</div>
+                <p class="task-desc">${t.description}</p>
+                ${t.referral_code ? `
+                <div class="task-code-box">
+                    <span class="task-code-val">Code: <b>${t.referral_code}</b></span>
+                    <button class="btn-code-copy" id="btnC_${idx}" onclick="copyTaskCode('${t.referral_code}', 'btnC_${idx}')">📋 Copy</button>
+                </div>` : ''}
+                <button class="btn-guide-trigger" onclick="openTaskGuide(${idx})">📖 Kaise Karein? (Tutorial)</button>
+                <div class="btn-group">
+                    <button class="btn-half btn-outline" onclick="openLink('${t.action_url}')">Open Link</button>
+                    ${isDone 
+                        ? `<button class="btn-half" disabled>Submitted ✅</button>`
+                        : `<button class="btn-half btn-action" onclick="openSubmitModal('${t.id}', '${t.title.replace(/'/g, "\\'")}')">Submit Proof</button>`
+                    }
+                </div>
+            </div>`;
+        }).join('');
+    };
+
+    // --- LOAD TASKS MAIN LOGIC ---
+    window.loadTasks = async function() {
+        document.getElementById('navTasks').classList.add('active');
+        document.getElementById('navStatus').classList.remove('active');
+        document.getElementById('sectionTitle').innerText = "Available Offers";
+        document.getElementById('filterSection').style.display = 'flex';
+        
+        let banners = '';
+        if (currentUserProfile?.referral_code) {
+            banners += `
+            <div class="referral-banner">
+                <h4>🎁 Invite Friends & Earn ₹30</h4>
+                <p>Dost ke pehla task approve hote hi aapko flat ₹30 direct wallet mein milenge!</p>
+                <div class="ref-box">
+                    <div>
+                        <span style="font-size:0.75rem; font-weight:700; display:block;">Your Invite Code</span>
+                        <span class="ref-code-txt">${currentUserProfile.referral_code}</span>
+                    </div>
+                    <button class="btn-copy-ref" onclick="shareReferralLink()">Copy Link 🔗</button>
+                </div>
+            </div>`;
+        }
+        const bal = parseFloat(currentUserProfile?.wallet_balance || 0);
+        if (bal > 0 && bal < 50) {
+            banners += `
+            <div class="wd-push-banner">
+                <div class="wd-push-text">⚡ Withdrawal se sirf <b>₹${50-bal}</b> door ho!<br>1 task karo aur instant <b>₹50</b> nikalo!</div>
+                <button class="btn-wd-target" onclick="window.scrollTo({top: 250, behavior: 'smooth'})">Do it 🚀</button>
+            </div>`;
+        }
+        document.getElementById('dynamicBanners').innerHTML = banners;
+        document.getElementById('dynamicContainer').innerHTML = "<p style='color: var(--text-sec);'>Loading offers...</p>";
+
+        try {
+            const { data: tasks, error } = await supabase.from('tasks').select('*').eq('is_active', true).order('created_at', { ascending: false });
+            if (error) throw error;
+
+            let subs = new Set();
+            if (currentUserProfile) {
+                const { data: userSubs } = await supabase.from('submissions').select('task_id').eq('user_id', currentUserProfile.id);
+                if (userSubs) subs = new Set(userSubs.map(s => s.task_id));
+            }
+            window.activeTasksList = tasks || [];
+            window.userDoneTaskIds = subs;
+            window.setTaskFilter('all');
+        } catch (e) { document.getElementById('dynamicContainer').innerHTML = "<p style='color:#EF4444;'>Error loading tasks.</p>"; }
+    };
+
+    // --- SUBMISSIONS & STATUS ---
+    window.submitProof = async function() {
+        const fileInput = document.getElementById('proofImage');
+        const proofText = document.getElementById('proofText').value.trim();
+        const upi = document.getElementById('upiId').value.trim();
+        if (!fileInput.files[0] || !upi) return alert("Provide screenshot & UPI ID.");
+        
+        const btn = document.getElementById('btnSubmitProof');
+        btn.innerText = "Uploading..."; btn.disabled = true;
+
+        try {
+            const file = fileInput.files[0];
+            const fileName = `${currentUserProfile.mobile}_${Date.now()}.${file.name.split('.').pop()}`;
+            const { error: upErr } = await supabase.storage.from('proofs').upload(fileName, file);
+            if (upErr) throw upErr;
+            
+            const { data: urlData } = supabase.storage.from('proofs').getPublicUrl(fileName);
+            await supabase.from('submissions').insert([{
+                user_id: currentUserProfile.id, task_id: currentTaskId, proof_text: proofText,
+                screenshot_url: urlData.publicUrl, image_hash: currentImageHash, status: 'pending'
+            }]);
+
+            if (currentImageHash) {
+                const hashes = JSON.parse(localStorage.getItem('used_proof_hashes') || '[]');
+                hashes.push(currentImageHash); localStorage.setItem('used_proof_hashes', JSON.stringify(hashes));
+            }
+            await supabase.from('profiles').update({ upi_id: upi }).eq('id', currentUserProfile.id);
+            currentUserProfile.upi_id = upi; localStorage.setItem('rem_upi', upi);
+            
+            alert("Proof submitted! Admin will review shortly.");
+            closeModal('submitModal'); loadStatus();
+        } catch (err) { alert("Error: " + err.message); } 
+        finally { btn.innerText = "Upload & Submit"; btn.disabled = false; fileInput.value = ''; }
+    };
+
+    window.loadStatus = async function() {
+        document.getElementById('navTasks').classList.remove('active');
+        document.getElementById('navStatus').classList.add('active');
+        document.getElementById('filterSection').style.display = 'none';
+        document.getElementById('dynamicBanners').innerHTML = '';
+        document.getElementById('sectionTitle').innerText = "Your Submissions";
+        document.getElementById('dynamicContainer').innerHTML = "<p style='color: var(--text-sec);'>Loading history...</p>";
+        
+        try {
+            const { data: subs, error } = await supabase.from('submissions').select(`id, status, admin_comment, created_at, tasks(title)`).eq('user_id', currentUserProfile.id).order('created_at', { ascending: false });
+            if (error) throw error;
+            if (!subs || subs.length === 0) return document.getElementById('dynamicContainer').innerHTML = "<p>No submissions yet.</p>";
+
+            document.getElementById('dynamicContainer').innerHTML = subs.map(h => {
+                const d = new Date(h.created_at);
+                return `
+                <div class="task-card">
+                    <div style="display:flex; justify-content: space-between;">
+                        <b style="font-size:1.05rem; color:var(--text-main);">${h.tasks?.title || 'Task'}</b>
+                        <span class="status-badge status-${h.status.toLowerCase()}">${h.status}</span>
+                    </div>
+                    <p style="font-size:0.8rem; margin-top:8px; color:var(--text-sec)">Date: ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</p>
+                    ${h.admin_comment ? `<p style="font-size:0.85rem; margin-top:8px; color:#DC2626; background:#FEE2E2; padding:8px; border-radius:8px;">Note: ${h.admin_comment}</p>` : ''}
+                </div>`;
+            }).join('');
+        } catch (e) { document.getElementById('dynamicContainer').innerHTML = "<p style='color:#EF4444;'>Failed to load status.</p>"; }
+    };
+
+    window.requestWithdraw = async function() {
+        const amt = parseFloat(document.getElementById('wdAmount').value);
+        const upi = document.getElementById('wdUpi').value.trim();
+        if (amt < 50) return alert("Min withdrawal ₹50");
+        if (!upi || amt > (currentUserProfile.wallet_balance || 0)) return alert("Invalid amount or UPI");
+        
+        const btn = document.getElementById('btnWithdraw'); btn.innerText = "Processing..."; btn.disabled = true;
+        try {
+            const newBal = (currentUserProfile.wallet_balance || 0) - amt;
+            await supabase.from('withdrawals').insert([{ user_id: currentUserProfile.id, amount: amt, upi_id: upi, status: 'pending' }]);
+            await supabase.from('profiles').update({ wallet_balance: newBal, upi_id: upi }).eq('id', currentUserProfile.id);
+            currentUserProfile.wallet_balance = newBal; updateWalletUI(newBal);
+            alert("Withdrawal Requested!"); closeModal('withdrawModal');
+        } catch (err) { alert("Error: " + err.message); } 
+        finally { btn.innerText = "Withdraw ⚡"; btn.disabled = false; }
+    };
+
+    // --- LEGAL & PWA ---
+    window.openLegalModal = function(type) {
+        const title = document.getElementById('legalModalTitle'), body = document.getElementById('legalModalBody');
+        if (type === 'privacy') { title.innerText = "Privacy Policy"; body.innerHTML = "<p>Data strictly used for rewards processing.</p>"; }
+        else if (type === 'terms') { title.innerText = "Terms of Service"; body.innerHTML = "<p>Fake proofs lead to ban. Min withdraw ₹50.</p>"; }
+        else if (type === 'grievance') { title.innerText = "Grievance Officer"; body.innerHTML = "<p>Email: taskwala.grievance@gmail.com</p>"; }
+        document.getElementById('legalModal').style.display = 'flex';
+    };
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(e => console.log(e));
+
+    // --- INIT APP (No Refresh Needed) ---
+    async function initApp() {
+        const refParam = new URLSearchParams(window.location.search).get('ref');
+        if (refParam) { const r = document.getElementById('authReferral'); if(r) r.value = refParam.toUpperCase(); }
+
+        const savedId = localStorage.getItem('rem_user_id');
+        if (!savedId) document.getElementById('authModal').style.display = 'flex';
+        else {
+            try {
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', savedId).maybeSingle();
+                if (profile) { currentUserProfile = profile; updateWalletUI(profile.wallet_balance || 0); } 
+                else document.getElementById('authModal').style.display = 'flex';
+            } catch (err) { console.error(err); }
+        }
+        loadTasks();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initApp); else initApp();
+
+</script>
+</body>
+</html>
