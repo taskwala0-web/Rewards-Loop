@@ -422,7 +422,6 @@
         </div>
         <button class="btn-copy-ref" id="btnShareInvite" onclick="shareReferralLink()">Copy Link 🔗</button>
     </div>
-</div>
 </div>        
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
@@ -516,20 +515,7 @@
             <button class="btn-outline" onclick="closeModal('withdrawModal')">Close</button>
         </div>
     </div>
-    <!-- Withdraw Modal -->
-    <div class="modal" id="withdrawModal">
-        <div class="modal-content">
-            <h2>Withdraw to UPI</h2>
-            <p style="color: var(--text-sec); font-size: 0.9rem; margin: 4px 0 14px 0;">Minimum withdrawal is ₹50.</p>
-            
-            <input type="number" id="wdAmount" placeholder="Amount (Min ₹50)">
-            <input type="text" id="wdUpi" placeholder="Your UPI ID">
-            
-            <button id="btnWithdraw" class="btn-action" onclick="requestWithdraw()">Withdraw ⚡</button>
-            <button class="btn-outline" onclick="closeModal('withdrawModal')">Close</button>
-        </div>
-    </div>
-
+  
     <!-- Legal & Grievance Modal -->
     <div class="modal" id="legalModal">
         <div class="modal-content">
@@ -935,74 +921,6 @@
                     submittedTaskIds = new Set(userSubs.map(s => s.task_id));
                 }
             }
-
-          // 3. Render cards with dynamic button state
-            window.activeTasksList = tasks;
-            taskDiv.innerHTML = tasks.map((t, idx) => {
-                const isAlreadyDone = submittedTaskIds.has(t.id);
-                return `
-                <div class="task-card">
-                    <span class="task-payout">₹${t.reward_amount}</span>
-                    <div class="badge">${t.category}</div>
-                    <div class="task-title">${t.title}</div>
-                    <p class="task-desc">${t.description}</p>
-                    
-                    ${t.referral_code ? `
-                    <div class="task-code-box">
-                        <span class="task-code-val">Code: <b>${t.referral_code}</b></span>
-                        <button class="btn-code-copy" id="btnCode_${idx}" onclick="copyTaskCode('${t.referral_code}', 'btnCode_${idx}')">📋 Copy Code</button>
-                    </div>` : ''}
-
-                    <!-- TUTORIAL BUTTON -->
-                    <button class="btn-guide-trigger" onclick="openTaskGuide(${idx})">
-                        📖 Tutorial
-                    </button>
-
-                    <div class="btn-group">
-                        <button class="btn-half btn-outline" onclick="openLink('${t.action_url}')">Open Link</button>
-                        ${isAlreadyDone 
-                            ? `<button class="btn-half" disabled>Submitted ✅</button>`
-                            : `<button class="btn-half btn-action" onclick="openSubmitModal('${t.id}', '${t.title}')">Submit Proof</button>`
-                        }
-                    </div>
-                </div>
-            `}).join('');
-            } catch (e) {
-            console.error(e);
-            taskDiv.innerHTML = "<p style='color: #EF4444;'>Failed to load tasks from database.</p>";
-        }
-    };
-       
-    // SUBMIT PROOF WITH DUPLICATE HASH STORAGE
-    window.submitProof = async function() {
-        const fileInput = document.getElementById('proofImage');
-        const proofText = document.getElementById('proofText').value.trim();
-        const upi = document.getElementById('upiId').value.trim();
-        
-        if (!fileInput.files[0]) return alert("Please select a screenshot.");
-        if (!upi) return alert("Please enter your UPI ID.");
-
-        const btn = document.getElementById('btnSubmitProof');
-        btn.innerText = "Uploading Proof...";
-        btn.disabled = true;
-
-        try {
-            const file = fileInput.files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${currentUserProfile.mobile}_${Date.now()}.${fileExt}`;
-
-            // Upload directly to Supabase Storage
-            const { error: uploadErr } = await supabase.storage
-                .from('proofs')
-                .upload(fileName, file, { cacheControl: '3600', upsert: false });
-
-            if (uploadErr) throw uploadErr;
-
-            const { data: urlData } = supabase.storage
-                .from('proofs')
-                .getPublicUrl(fileName);
-
-            const screenshotUrl = urlData.publicUrl;
 
             // Insert submission with image_hash
             const { error: subErr } = await supabase
